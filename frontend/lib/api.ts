@@ -1,8 +1,23 @@
 import type { MoleculeData } from "@/types/molecule";
+import { supabase } from "./supabase";
 
 function getApiBase(): string {
-  if (typeof window === "undefined") return "http://localhost:8000";
-  return process.env.NEXT_PUBLIC_API_URL ?? `http://${window.location.hostname}:8000`;
+  return process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+}
+
+async function getAuthHeaders(): Promise<Record<string, string>> {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  if (!session?.access_token) {
+    throw new Error("Not authenticated");
+  }
+
+  return {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${session.access_token}`,
+  };
 }
 
 class ApiError extends Error {
@@ -16,18 +31,21 @@ class ApiError extends Error {
 }
 
 export async function visualizeMolecule(smiles: string): Promise<MoleculeData> {
+  const headers = await getAuthHeaders();
+
   const res = await fetch(`${getApiBase()}/api/visualize`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers,
     body: JSON.stringify({ smiles }),
   });
 
+  if (res.status === 401) {
+    throw new ApiError("Session expired. Please log in again.", 401);
+  }
+
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
-    throw new ApiError(
-      body.detail || `Server error: ${res.status}`,
-      res.status,
-    );
+    throw new ApiError(body.detail || `Server error: ${res.status}`, res.status);
   }
 
   return res.json();
