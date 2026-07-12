@@ -26,6 +26,7 @@ class Settings(BaseSettings):
     SMILES_MAX_LENGTH: int = 500
 
     # Supabase Auth
+    SUPABASE_URL: str = ""
     SUPABASE_JWT_SECRET: str = ""
 
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}

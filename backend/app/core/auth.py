@@ -1,8 +1,17 @@
 """
 Authentication dependency for FastAPI routes.
-Verifies Supabase JWTs using the project's JWT secret.
-No network call to Supabase — pure local signature verification.
+Verifies Supabase JWTs against Supabase's published JWKS.
+
+Supabase's newer "JWT Signing Keys" sign access tokens with an
+asymmetric algorithm (ES256) and a rotating key identified by `kid`,
+rather than the legacy static HS256 secret. We fetch and cache the
+JWKS from Supabase and verify each token against the matching key.
 """
+
+import json
+import time
+import urllib.request
+from urllib.error import URLError
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -11,6 +20,45 @@ from jose import JWTError, jwt
 from app.core.config import settings
 
 security = HTTPBearer()
+
+_JWKS_CACHE_TTL_SECONDS = 3600
+_jwks_cache: dict = {"keys": [], "fetched_at": 0.0}
+
+
+def _fetch_jwks() -> list[dict]:
+    url = f"{settings.SUPABASE_URL}/auth/v1/.well-known/jwks.json"
+    with urllib.request.urlopen(url, timeout=5) as response:
+        return json.loads(response.read())["keys"]
+
+
+def _get_jwks(force_refresh: bool = False) -> list[dict]:
+    now = time.time()
+    if not force_refresh and _jwks_cache["keys"] and now - _jwks_cache["fetched_at"] < _JWKS_CACHE_TTL_SECONDS:
+        return _jwks_cache["keys"]
+
+    try:
+        keys = _fetch_jwks()
+    except (URLError, ValueError, KeyError):
+        if _jwks_cache["keys"]:
+            return _jwks_cache["keys"]
+        raise
+
+    _jwks_cache["keys"] = keys
+    _jwks_cache["fetched_at"] = now
+    return keys
+
+
+def _get_signing_key(kid: str) -> dict:
+    for key in _get_jwks():
+        if key.get("kid") == kid:
+            return key
+
+    # Key not found — could be a recent rotation, so force one refresh.
+    for key in _get_jwks(force_refresh=True):
+        if key.get("kid") == kid:
+            return key
+
+    raise JWTError(f"No matching signing key for kid={kid}")
 
 
 def get_current_user(
@@ -27,13 +75,16 @@ def get_current_user(
     token = credentials.credentials
 
     try:
+        header = jwt.get_unverified_header(token)
+        signing_key = _get_signing_key(header["kid"])
         payload = jwt.decode(
             token,
-            settings.SUPABASE_JWT_SECRET,
-            algorithms=["HS256"],
+            signing_key,
+            algorithms=[signing_key["alg"]],
             options={"verify_aud": False},
         )
-    except JWTError:
+    except (JWTError, KeyError) as e:
+        print(f"JWT ERROR: {e}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired token",
