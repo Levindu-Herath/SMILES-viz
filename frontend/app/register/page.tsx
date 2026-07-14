@@ -1,16 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/components/auth/AuthProvider";
 
 export default function RegisterPage() {
+  const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!authLoading && user) {
+      router.push("/visualize");
+    }
+  }, [user, authLoading, router]);
 
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault();
@@ -41,11 +51,8 @@ export default function RegisterPage() {
   return (
     <main className="min-h-screen bg-slate-950 flex items-center justify-center px-4">
       <div className="w-full max-w-sm space-y-8">
-        {/* Logo */}
+        {/* Heading */}
         <div className="text-center">
-          <div className="inline-flex h-12 w-12 rounded-lg bg-emerald-500/20 items-center justify-center text-emerald-400 text-2xl font-bold mb-4">
-            ⌬
-          </div>
           <h1 className="text-2xl font-semibold text-slate-100 tracking-tight">
             Create your account
           </h1>

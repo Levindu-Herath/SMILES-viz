@@ -10,7 +10,7 @@ export default function AuthCallbackPage() {
   useEffect(() => {
     supabase.auth.onAuthStateChange((event) => {
       if (event === "SIGNED_IN") {
-        router.push("/");
+        router.push("/visualize");
       }
     });
   }, [router]);

@@ -1,16 +1,24 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/components/auth/AuthProvider";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!authLoading && user) {
+      router.push("/visualize");
+    }
+  }, [user, authLoading, router]);
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
@@ -28,17 +36,14 @@ export default function LoginPage() {
       return;
     }
 
-    router.push("/");
+    router.push("/visualize");
   }
 
   return (
     <main className="min-h-screen bg-slate-950 flex items-center justify-center px-4">
       <div className="w-full max-w-sm space-y-8">
-        {/* Logo */}
+        {/* Heading */}
         <div className="text-center">
-          <div className="inline-flex h-12 w-12 rounded-lg bg-emerald-500/20 items-center justify-center text-emerald-400 text-2xl font-bold mb-4">
-            ⌬
-          </div>
           <h1 className="text-2xl font-semibold text-slate-100 tracking-tight">
             Sign in to SMILES Viz
           </h1>
