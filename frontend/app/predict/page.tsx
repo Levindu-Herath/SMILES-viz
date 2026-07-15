@@ -1,65 +1,61 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { EXAMPLE_MOLECULES } from "@/constants/molecules";
-
-interface PredictionResult {
-  prediction: "Active" | "Inactive";
-  probability: number;
-  threshold: number;
-  model: string;
-}
-
-const MODELS = [
-  {
-    id: "logistic_regression",
-    name: "Logistic Regression",
-    rocAuc: "0.778",
-  },
-  {
-    id: "gradient_boosting",
-    name: "Gradient Boosting",
-    rocAuc: "0.805",
-  },
-  {
-    id: "linear_svm",
-    name: "Linear SVM",
-    rocAuc: "0.799",
-  },
-  {
-    id: "random_forest",
-    name: "Random Forest",
-    rocAuc: "0.809",
-  },
-] as const;
+import { getAvailableModels, predictActivity } from "@/lib/api";
+import type { ModelInfo, PredictionResult } from "@/types/prediction";
 
 function PredictPage() {
+  const router = useRouter();
+
   const [smiles, setSmiles] = useState("");
-  const [selectedModel, setSelectedModel] = useState<(typeof MODELS)[number]["id"]>(MODELS[0].id);
+  const [models, setModels] = useState<ModelInfo[]>([]);
+  const [selectedModel, setSelectedModel] = useState("");
+  const [modelsError, setModelsError] = useState("");
   const [result, setResult] = useState<PredictionResult | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    getAvailableModels()
+      .then((data) => {
+        setModels(data.models);
+        setSelectedModel(data.default_model);
+      })
+      .catch((err: unknown) => {
+        if (err instanceof Error && err.message.includes("Session expired")) {
+          router.push("/login");
+          return;
+        }
+        setModelsError(
+          err instanceof Error ? err.message : "Failed to load available models.",
+        );
+      });
+  }, [router]);
+
   async function handlePredict() {
     const trimmed = smiles.trim();
-    if (!trimmed || loading) return;
+    if (!trimmed || loading || !selectedModel) return;
 
     setLoading(true);
     setError("");
     setResult(null);
 
     try {
-      // TODO: Replace with actual API call once backend endpoint is built
-      throw new Error("Prediction endpoint not yet connected.");
+      const data = await predictActivity(trimmed, selectedModel);
+      setResult(data);
     } catch (err: unknown) {
+      if (err instanceof Error && err.message.includes("Session expired")) {
+        router.push("/login");
+        return;
+      }
       setError(err instanceof Error ? err.message : "Failed to connect to the backend.");
     } finally {
       setLoading(false);
     }
   }
-
-  const selectedModelName = MODELS.find((m) => m.id === selectedModel)?.name ?? "";
 
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100">
@@ -98,7 +94,7 @@ function PredictPage() {
             <button
               type="button"
               onClick={handlePredict}
-              disabled={loading}
+              disabled={loading || !selectedModel}
               className="rounded-lg bg-emerald-600 px-6 py-3 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
             >
               {loading ? "Predicting…" : "Predict"}
@@ -122,31 +118,43 @@ function PredictPage() {
         {/* Model selector */}
         <section className="rounded-xl border border-slate-800 bg-slate-900/60 p-6">
           <h2 className="text-sm font-medium text-slate-400 mb-4">Model</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {MODELS.map((model) => (
-              <label
-                key={model.id}
-                className={`flex items-center justify-between rounded-lg border px-4 py-3 cursor-pointer transition-colors ${
-                  selectedModel === model.id
-                    ? "border-emerald-600 bg-emerald-500/10"
-                    : "border-slate-700 hover:border-slate-600"
-                }`}
-              >
-                <span className="flex items-center gap-3">
-                  <input
-                    type="radio"
-                    name="model"
-                    value={model.id}
-                    checked={selectedModel === model.id}
-                    onChange={() => setSelectedModel(model.id)}
-                    className="accent-emerald-500"
-                  />
-                  <span className="text-sm text-slate-200">{model.name}</span>
-                </span>
-                <span className="text-xs text-slate-500">AUC {model.rocAuc}</span>
-              </label>
-            ))}
-          </div>
+          {modelsError && (
+            <div className="rounded-lg border border-red-800/60 bg-red-950/40 px-4 py-3 text-sm text-red-300">
+              {modelsError}
+            </div>
+          )}
+          {!modelsError && models.length === 0 && (
+            <p className="text-sm text-slate-500">Loading models…</p>
+          )}
+          {models.length > 0 && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {models.map((model) => (
+                <label
+                  key={model.name}
+                  className={`flex items-center justify-between rounded-lg border px-4 py-3 cursor-pointer transition-colors ${
+                    selectedModel === model.name
+                      ? "border-emerald-600 bg-emerald-500/10"
+                      : "border-slate-700 hover:border-slate-600"
+                  }`}
+                >
+                  <span className="flex items-center gap-3">
+                    <input
+                      type="radio"
+                      name="model"
+                      value={model.name}
+                      checked={selectedModel === model.name}
+                      onChange={() => setSelectedModel(model.name)}
+                      className="accent-emerald-500"
+                    />
+                    <span className="text-sm text-slate-200">{model.name}</span>
+                  </span>
+                  <span className="text-xs text-slate-500">
+                    AUC {model.roc_auc.toFixed(3)}
+                  </span>
+                </label>
+              ))}
+            </div>
+          )}
         </section>
 
         {error && (
@@ -191,7 +199,7 @@ function PredictPage() {
               </div>
             </div>
 
-            <p className="text-xs text-slate-500">Model: {result.model}</p>
+            <p className="text-xs text-slate-500">Model: {result.model_name}</p>
           </section>
         )}
 
@@ -199,7 +207,7 @@ function PredictPage() {
         <section className="rounded-xl border border-slate-800 bg-slate-900/40 p-6">
           <h2 className="text-sm font-medium text-slate-400 mb-3">Pipeline</h2>
           <p className="text-xs font-mono text-slate-500 leading-relaxed">
-            SMILES → Graph → WL kernel (3329-dim) → FDDL sparse coding (32-dim) → MaxAbsScaler → {selectedModelName || "Classifier"}
+            SMILES → Graph → WL kernel (3329-dim) → FDDL sparse coding (32-dim) → MaxAbsScaler → {selectedModel || "Classifier"}
           </p>
         </section>
       </div>

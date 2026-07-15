@@ -7,7 +7,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
-from app.routers import health, molecule
+from app.routers import health, molecule, prediction
 
 
 def create_app() -> FastAPI:
@@ -28,6 +28,7 @@ def create_app() -> FastAPI:
     # Routers
     app.include_router(health.router)
     app.include_router(molecule.router)
+    app.include_router(prediction.router)
 
     return app
 

@@ -1,4 +1,5 @@
 import type { MoleculeData } from "@/types/molecule";
+import type { AvailableModelsResponse, PredictionResult } from "@/types/prediction";
 import { supabase } from "./supabase";
 
 function getApiBase(): string {
@@ -37,6 +38,49 @@ export async function visualizeMolecule(smiles: string): Promise<MoleculeData> {
     method: "POST",
     headers,
     body: JSON.stringify({ smiles }),
+  });
+
+  if (res.status === 401) {
+    throw new ApiError("Session expired. Please log in again.", 401);
+  }
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new ApiError(body.detail || `Server error: ${res.status}`, res.status);
+  }
+
+  return res.json();
+}
+
+export async function getAvailableModels(): Promise<AvailableModelsResponse> {
+  const headers = await getAuthHeaders();
+
+  const res = await fetch(`${getApiBase()}/api/predict/models`, {
+    headers,
+  });
+
+  if (res.status === 401) {
+    throw new ApiError("Session expired. Please log in again.", 401);
+  }
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new ApiError(body.detail || `Server error: ${res.status}`, res.status);
+  }
+
+  return res.json();
+}
+
+export async function predictActivity(
+  smiles: string,
+  modelName: string,
+): Promise<PredictionResult> {
+  const headers = await getAuthHeaders();
+
+  const res = await fetch(`${getApiBase()}/api/predict`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ smiles, model_name: modelName }),
   });
 
   if (res.status === 401) {
