@@ -3,9 +3,16 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AuthGuard } from "@/components/auth/AuthGuard";
+import { RadarChart } from "@/components/molecule/RadarChart";
+import { PropRow } from "@/components/ui/PropRow";
+import { SectionCard } from "@/components/ui/SectionCard";
 import { EXAMPLE_MOLECULES } from "@/constants/molecules";
-import { getAvailableModels, predictActivity } from "@/lib/api";
+import { getAvailableModels, predictActivity, visualizeMolecule } from "@/lib/api";
+import type { MoleculeData } from "@/types/molecule";
 import type { ModelInfo, PredictionResult } from "@/types/prediction";
+
+// How far probability must sit from the decision threshold to call it "high confidence".
+const CONFIDENCE_MARGIN = 0.15;
 
 function PredictPage() {
   const router = useRouter();
@@ -14,7 +21,8 @@ function PredictPage() {
   const [models, setModels] = useState<ModelInfo[]>([]);
   const [selectedModel, setSelectedModel] = useState("");
   const [modelsError, setModelsError] = useState("");
-  const [result, setResult] = useState<PredictionResult | null>(null);
+  const [predictionResult, setPredictionResult] = useState<PredictionResult | null>(null);
+  const [moleculeData, setMoleculeData] = useState<MoleculeData | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -41,21 +49,42 @@ function PredictPage() {
 
     setLoading(true);
     setError("");
-    setResult(null);
+    setPredictionResult(null);
+    setMoleculeData(null);
 
-    try {
-      const data = await predictActivity(trimmed, selectedModel);
-      setResult(data);
-    } catch (err: unknown) {
+    const [predictOutcome, visualizeOutcome] = await Promise.all([
+      predictActivity(trimmed, selectedModel)
+        .then((value) => ({ ok: true as const, value }))
+        .catch((err: unknown) => ({ ok: false as const, err })),
+      visualizeMolecule(trimmed)
+        .then((value) => ({ ok: true as const, value }))
+        .catch((err: unknown) => ({ ok: false as const, err })),
+    ]);
+
+    if (predictOutcome.ok) {
+      setPredictionResult(predictOutcome.value);
+    } else {
+      const err = predictOutcome.err;
       if (err instanceof Error && err.message.includes("Session expired")) {
         router.push("/login");
+        setLoading(false);
         return;
       }
       setError(err instanceof Error ? err.message : "Failed to connect to the backend.");
-    } finally {
-      setLoading(false);
     }
+
+    if (visualizeOutcome.ok) {
+      setMoleculeData(visualizeOutcome.value);
+    }
+
+    setLoading(false);
   }
+
+  const confidence =
+    predictionResult &&
+    (Math.abs(predictionResult.probability - predictionResult.threshold) >= CONFIDENCE_MARGIN
+      ? "High confidence"
+      : "Low confidence");
 
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100">
@@ -77,29 +106,19 @@ function PredictPage() {
           >
             Enter a SMILES string
           </label>
-          <div className="flex gap-3">
-            <input
-              id="smiles-input"
-              type="text"
-              value={smiles}
-              onChange={(e) => setSmiles(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") handlePredict();
-              }}
-              placeholder="e.g. CC(=O)Oc1ccccc1C(=O)O"
-              className="flex-1 rounded-lg border border-slate-700 bg-slate-900 px-4 py-3 text-base font-mono placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-colors"
-              spellCheck={false}
-              autoComplete="off"
-            />
-            <button
-              type="button"
-              onClick={handlePredict}
-              disabled={loading || !selectedModel}
-              className="rounded-lg bg-emerald-600 px-6 py-3 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
-            >
-              {loading ? "Predicting…" : "Predict"}
-            </button>
-          </div>
+          <input
+            id="smiles-input"
+            type="text"
+            value={smiles}
+            onChange={(e) => setSmiles(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") handlePredict();
+            }}
+            placeholder="e.g. CC(=O)Oc1ccccc1C(=O)O"
+            className="w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-3 text-base font-mono placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-colors"
+            spellCheck={false}
+            autoComplete="off"
+          />
           <div className="mt-3 flex flex-wrap gap-2">
             <span className="text-xs text-slate-500 self-center mr-1">Try:</span>
             {EXAMPLE_MOLECULES.map((m) => (
@@ -157,50 +176,141 @@ function PredictPage() {
           )}
         </section>
 
+        {/* Predict button */}
+        <button
+          type="button"
+          onClick={handlePredict}
+          disabled={loading || !selectedModel || !smiles.trim()}
+          className="w-full rounded-lg bg-emerald-600 py-3.5 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+        >
+          {loading ? "Predicting…" : "Predict"}
+        </button>
+
         {error && (
           <div className="rounded-lg border border-red-800/60 bg-red-950/40 px-5 py-4 text-sm text-red-300">
             {error}
           </div>
         )}
 
-        {result && (
-          <section className="rounded-xl border border-slate-800 bg-slate-900/60 p-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-sm font-medium text-slate-400">Prediction</h2>
-              <span
-                className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                  result.prediction === "Active"
-                    ? "bg-emerald-500/20 text-emerald-400"
-                    : "bg-red-500/20 text-red-400"
-                }`}
-              >
-                {result.prediction}
-              </span>
+        {loading && (
+          <div className="grid gap-6 lg:grid-cols-5">
+            <div className="lg:col-span-2 rounded-xl border border-slate-800 bg-slate-900/40 min-h-[300px] flex items-center justify-center">
+              <p className="text-sm text-slate-500">Rendering molecule…</p>
+            </div>
+            <div className="lg:col-span-3 rounded-xl border border-slate-800 bg-slate-900/40 min-h-[300px] flex items-center justify-center">
+              <p className="text-sm text-slate-500">Running prediction…</p>
+            </div>
+          </div>
+        )}
+
+        {!loading && predictionResult && (
+          <div className="space-y-6">
+            <div className="grid gap-6 lg:grid-cols-5">
+              {/* Left: molecule structure */}
+              <div className="lg:col-span-2 flex justify-center">
+                {moleculeData ? (
+                  <div className="w-full max-w-[400px] rounded-xl border border-slate-800 bg-white p-6 flex items-center justify-center min-h-[300px] overflow-hidden">
+                    <div
+                      className="w-full [&>svg]:max-w-full [&>svg]:h-auto"
+                      dangerouslySetInnerHTML={{ __html: moleculeData.svg }}
+                    />
+                  </div>
+                ) : (
+                  <div className="w-full max-w-[400px] rounded-xl border border-slate-800 bg-slate-900/40 p-6 min-h-[300px] flex items-center justify-center">
+                    <p className="text-sm text-slate-500 text-center">
+                      Molecule visualization unavailable.
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Right: prediction results */}
+              <div className="lg:col-span-3 rounded-xl border border-slate-800 bg-slate-900/60 p-8 space-y-6">
+                <div className="flex flex-col sm:flex-row items-center sm:justify-between gap-6 text-center sm:text-left">
+                  <div>
+                    <p className="text-xs text-slate-500 mb-1.5">Prediction</p>
+                    <span
+                      className={`inline-block rounded-full px-5 py-2 text-2xl font-bold ${
+                        predictionResult.prediction === "Active"
+                          ? "bg-emerald-500/20 text-emerald-400"
+                          : "bg-red-500/20 text-red-400"
+                      }`}
+                    >
+                      {predictionResult.prediction}
+                    </span>
+                  </div>
+                  <div className="sm:text-right">
+                    <p className="text-xs text-slate-500 mb-1.5">Probability</p>
+                    <span className="text-5xl font-bold text-slate-100">
+                      {(predictionResult.probability * 100).toFixed(1)}%
+                    </span>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="relative h-2.5 rounded-full bg-slate-800 w-full">
+                    <div
+                      className="absolute inset-y-0 left-0 rounded-full bg-emerald-500"
+                      style={{ width: `${predictionResult.probability * 100}%` }}
+                    />
+                    <div
+                      className="absolute inset-y-0 w-0.5 bg-slate-300"
+                      style={{ left: `${predictionResult.threshold * 100}%` }}
+                      title={`Threshold: ${predictionResult.threshold}`}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-4 pt-4 border-t border-slate-800">
+                  <div className="text-center">
+                    <p className="text-xs text-slate-500 mb-1.5">Model</p>
+                    <p className="text-sm text-slate-200">{predictionResult.model_name}</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xs text-slate-500 mb-1.5">Threshold</p>
+                    <p className="text-sm text-slate-200">
+                      {predictionResult.threshold.toFixed(2)}
+                    </p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xs text-slate-500 mb-1.5">Confidence</p>
+                    <span
+                      className={`inline-block text-xs font-medium px-2.5 py-0.5 rounded-full border ${
+                        confidence === "High confidence"
+                          ? "bg-emerald-900/50 text-emerald-400 border-emerald-700/50"
+                          : "bg-amber-900/50 text-amber-400 border-amber-700/50"
+                      }`}
+                    >
+                      {confidence}
+                    </span>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <div>
-              <div className="flex justify-between text-xs text-slate-500 mb-1.5">
-                <span>Probability</span>
-                <span>{(result.probability * 100).toFixed(1)}%</span>
-              </div>
-              <div className="relative h-2 rounded-full bg-slate-800">
-                <div
-                  className="absolute inset-y-0 left-0 rounded-full bg-emerald-500"
-                  style={{ width: `${result.probability * 100}%` }}
-                />
-                <div
-                  className="absolute inset-y-0 w-0.5 bg-slate-300"
-                  style={{ left: `${result.threshold * 100}%` }}
-                  title={`Threshold: ${result.threshold}`}
-                />
-              </div>
-              <div className="mt-1 text-xs text-slate-500">
-                Threshold: {result.threshold.toFixed(2)}
-              </div>
-            </div>
+            {/* Molecular properties + bioavailability radar */}
+            {moleculeData && (
+              <div className="grid gap-6 lg:grid-cols-2">
+                <SectionCard title="Molecular properties">
+                  <PropRow label="Formula" value={moleculeData.physicochemical.formula} />
+                  <PropRow
+                    label="Molecular weight"
+                    value={`${moleculeData.physicochemical.mw} g/mol`}
+                  />
+                  <PropRow label="LogP" value={moleculeData.lipophilicity.crippen_logp} />
+                  <PropRow label="TPSA" value={`${moleculeData.physicochemical.tpsa} Å²`} />
+                  <PropRow label="H-bond donors" value={moleculeData.physicochemical.hbd} />
+                  <PropRow label="H-bond acceptors" value={moleculeData.physicochemical.hba} />
+                </SectionCard>
 
-            <p className="text-xs text-slate-500">Model: {result.model_name}</p>
-          </section>
+                <SectionCard title="Bioavailability radar">
+                  <div className="flex justify-center">
+                    <RadarChart data={moleculeData.radar} />
+                  </div>
+                </SectionCard>
+              </div>
+            )}
+          </div>
         )}
 
         {/* Pipeline info */}
