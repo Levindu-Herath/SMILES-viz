@@ -33,6 +33,7 @@ class Settings(BaseSettings):
     # Supabase Auth
     SUPABASE_URL: str = ""
     SUPABASE_JWT_SECRET: str = ""
+    SUPABASE_SERVICE_ROLE_KEY: str = ""
 
     # ML prediction pipeline
     ARTIFACT_DIR: str = (

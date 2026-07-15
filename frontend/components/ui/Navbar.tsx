@@ -7,6 +7,7 @@ import { useAuth } from "@/components/auth/AuthProvider";
 const NAV_ITEMS = [
   { label: "Visualize", href: "/visualize" },
   { label: "Predict", href: "/predict" },
+  { label: "Datasets", href: "/datasets" },
 ] as const;
 
 export function Navbar() {

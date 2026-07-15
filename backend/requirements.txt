@@ -4,6 +4,8 @@ rdkit
 Pillow>=10.0.0
 pydantic-settings>=2.0.0
 python-jose[cryptography]>=3.3.0
+supabase>=2.0.0
+python-multipart>=0.0.9
 
 # ML prediction pipeline (backend/sparsegraphs: WL encoder + FDDL sparse coding + classifiers)
 # scikit-learn==1.9.0 matches the version the artifact bundle was trained with (requires
