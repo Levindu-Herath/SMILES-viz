@@ -5,8 +5,7 @@ import { usePathname } from "next/navigation";
 import { useAuth } from "@/components/auth/AuthProvider";
 
 const NAV_ITEMS = [
-  { label: "Visualize", href: "/visualize" },
-  { label: "Predict", href: "/predict" },
+  { label: "Analyze", href: "/visualize" },
   { label: "Datasets", href: "/datasets" },
 ] as const;
 
