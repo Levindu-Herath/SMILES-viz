@@ -1,8 +1,30 @@
 import type { MoleculeData } from "@/types/molecule";
+import type { AvailableModelsResponse, PredictionResult } from "@/types/prediction";
+import type { DatasetListResponse, DownloadUrlResponse, UploadResponse } from "@/types/dataset";
+import { supabase } from "./supabase";
 
 function getApiBase(): string {
-  if (typeof window === "undefined") return "http://localhost:8000";
-  return process.env.NEXT_PUBLIC_API_URL ?? `http://${window.location.hostname}:8000`;
+  return process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+}
+
+async function getAuthToken(): Promise<string> {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  if (!session?.access_token) {
+    throw new Error("Not authenticated");
+  }
+
+  return session.access_token;
+}
+
+async function getAuthHeaders(): Promise<Record<string, string>> {
+  const token = await getAuthToken();
+  return {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`,
+  };
 }
 
 class ApiError extends Error {
@@ -16,21 +38,153 @@ class ApiError extends Error {
 }
 
 export async function visualizeMolecule(smiles: string): Promise<MoleculeData> {
+  const headers = await getAuthHeaders();
+
   const res = await fetch(`${getApiBase()}/api/visualize`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers,
     body: JSON.stringify({ smiles }),
   });
 
+  if (res.status === 401) {
+    throw new ApiError("Session expired. Please log in again.", 401);
+  }
+
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
-    throw new ApiError(
-      body.detail || `Server error: ${res.status}`,
-      res.status,
-    );
+    throw new ApiError(body.detail || `Server error: ${res.status}`, res.status);
   }
 
   return res.json();
+}
+
+export async function getAvailableModels(): Promise<AvailableModelsResponse> {
+  const headers = await getAuthHeaders();
+
+  const res = await fetch(`${getApiBase()}/api/predict/models`, {
+    headers,
+  });
+
+  if (res.status === 401) {
+    throw new ApiError("Session expired. Please log in again.", 401);
+  }
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new ApiError(body.detail || `Server error: ${res.status}`, res.status);
+  }
+
+  return res.json();
+}
+
+export async function predictActivity(
+  smiles: string,
+  modelName: string,
+): Promise<PredictionResult> {
+  const headers = await getAuthHeaders();
+
+  const res = await fetch(`${getApiBase()}/api/predict`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ smiles, model_name: modelName }),
+  });
+
+  if (res.status === 401) {
+    throw new ApiError("Session expired. Please log in again.", 401);
+  }
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new ApiError(body.detail || `Server error: ${res.status}`, res.status);
+  }
+
+  return res.json();
+}
+
+export async function uploadDataset(
+  file: File,
+  name: string,
+  description: string,
+): Promise<UploadResponse> {
+  const token = await getAuthToken();
+
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("name", name);
+  formData.append("description", description);
+
+  const res = await fetch(`${getApiBase()}/api/datasets/upload`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: formData,
+  });
+
+  if (res.status === 401) {
+    throw new ApiError("Session expired. Please log in again.", 401);
+  }
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new ApiError(body.detail || `Server error: ${res.status}`, res.status);
+  }
+
+  return res.json();
+}
+
+export async function listDatasets(): Promise<DatasetListResponse> {
+  const headers = await getAuthHeaders();
+
+  const res = await fetch(`${getApiBase()}/api/datasets`, {
+    headers,
+  });
+
+  if (res.status === 401) {
+    throw new ApiError("Session expired. Please log in again.", 401);
+  }
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new ApiError(body.detail || `Server error: ${res.status}`, res.status);
+  }
+
+  return res.json();
+}
+
+export async function getDownloadUrl(datasetId: string): Promise<DownloadUrlResponse> {
+  const headers = await getAuthHeaders();
+
+  const res = await fetch(`${getApiBase()}/api/datasets/${datasetId}/download`, {
+    headers,
+  });
+
+  if (res.status === 401) {
+    throw new ApiError("Session expired. Please log in again.", 401);
+  }
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new ApiError(body.detail || `Server error: ${res.status}`, res.status);
+  }
+
+  return res.json();
+}
+
+export async function deleteDataset(datasetId: string): Promise<void> {
+  const headers = await getAuthHeaders();
+
+  const res = await fetch(`${getApiBase()}/api/datasets/${datasetId}`, {
+    method: "DELETE",
+    headers,
+  });
+
+  if (res.status === 401) {
+    throw new ApiError("Session expired. Please log in again.", 401);
+  }
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new ApiError(body.detail || `Server error: ${res.status}`, res.status);
+  }
 }
 
 export async function checkHealth(): Promise<boolean> {

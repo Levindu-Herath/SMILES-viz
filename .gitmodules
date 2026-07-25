@@ -1,0 +1,4 @@
+[submodule "backend/sparsegraphs"]
+	path = backend/sparsegraphs
+	url = https://github.com/nimendra-ag/sparsegraphs_results.git
+	branch = kanishka
