@@ -173,6 +173,15 @@ function AnalysisPage() {
     setSelectedModel("");
   }
 
+  function handleSelectExample(exampleSmiles: string) {
+    setSmiles(exampleSmiles);
+    setError("");
+    setVisualizeResult(null);
+    setPredictionResult(null);
+    setPredictMoleculeData(null);
+    setSelectedModel("");
+  }
+
   const confidence =
     predictionResult &&
     (Math.abs(predictionResult.probability - predictionResult.threshold) >= CONFIDENCE_MARGIN
@@ -285,7 +294,7 @@ function AnalysisPage() {
               <button
                 key={m.smiles}
                 type="button"
-                onClick={() => setSmiles(m.smiles)}
+                onClick={() => handleSelectExample(m.smiles)}
                 className="rounded-full border border-slate-700 px-3 py-1 text-xs text-slate-400 hover:border-emerald-600 hover:text-emerald-400 transition-colors"
               >
                 {m.name}
@@ -454,6 +463,11 @@ function AnalysisPage() {
                     {(predictionResult.probability * 100).toFixed(1)}%
                   </p>
                   <p className="mt-1 text-xs text-slate-500">Probability</p>
+                  <p className="mt-3 text-sm text-slate-400">
+                    {predictionResult.prediction === "Active"
+                      ? "This molecule is predicted to inhibit cancer cell growth — a candidate anti-cancer compound."
+                      : "This molecule is predicted to show no significant anti-cancer activity in this screen."}
+                  </p>
                 </div>
 
                 <div className="relative h-2.5 rounded-full bg-slate-800 w-full">
