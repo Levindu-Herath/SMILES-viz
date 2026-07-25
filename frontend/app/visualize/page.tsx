@@ -192,7 +192,7 @@ function AnalysisPage() {
 
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100">
-      <div className="mx-auto max-w-6xl px-6 py-8 space-y-6">
+      <div className="mx-auto max-w-6xl px-6 py-8 space-y-4">
         <div>
           <h1 className="text-xl font-semibold tracking-tight">Molecular analysis</h1>
           <p className="mt-1 text-sm text-slate-400">
@@ -234,7 +234,7 @@ function AnalysisPage() {
         </div>
 
         {/* SMILES input */}
-        <div className="space-y-3">
+        <div className="space-y-2">
           <label htmlFor="smiles-input" className="sr-only">
             SMILES notation
           </label>
@@ -305,7 +305,7 @@ function AnalysisPage() {
 
         {/* Model selector (predict mode only) — clicking a model runs the prediction */}
         {mode === "predict" && (
-          <div className="space-y-3">
+          <div className="space-y-2">
             <h2 className="flex items-center gap-1.5 text-xs uppercase tracking-wider text-slate-400 font-medium">
               <ActivityIcon />
               Choose a model
@@ -319,7 +319,7 @@ function AnalysisPage() {
               <p className="text-sm text-slate-500">Loading models…</p>
             )}
             {models.length > 0 && (
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
                 {models.map((model) => {
                   const isEmpty = !smiles.trim();
                   const disabled = isEmpty || loading;
@@ -336,26 +336,26 @@ function AnalysisPage() {
                           runPrediction(model.name);
                         }
                       }}
-                      className={`rounded-lg border p-4 transition-all duration-150 ${
+                      className={`rounded-lg border py-2.5 px-3 transition-all duration-150 ${
                         isSelected
                           ? "border-emerald-500/50 bg-emerald-500/5 ring-1 ring-emerald-500/20"
                           : "border-slate-800 bg-slate-900/40 hover:border-slate-700 hover:bg-slate-800/50"
                       } ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
                     >
                       <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-2.5">
+                        <div className="flex items-center gap-2 min-w-0">
                           <span
-                            className={`h-3 w-3 rounded-full border shrink-0 ${
+                            className={`h-2.5 w-2.5 rounded-full border shrink-0 ${
                               isSelected
                                 ? "border-emerald-500 bg-emerald-500"
                                 : "border-slate-600"
                             }`}
                           />
-                          <span className="text-sm font-medium text-slate-200">
+                          <span className="text-xs font-medium text-slate-200 truncate">
                             {loading && isSelected ? "Predicting…" : model.name}
                           </span>
                         </div>
-                        <span className="text-xs text-slate-500 font-mono">
+                        <span className="text-[10px] text-slate-500 font-mono shrink-0">
                           {model.roc_auc.toFixed(3)}
                         </span>
                       </div>
@@ -399,19 +399,19 @@ function AnalysisPage() {
         )}
 
         {!loading && mode === "predict" && predictionResult && (
-          <div className="animate-fade-in space-y-6">
-            <div className="grid gap-6 lg:grid-cols-[1fr_1fr]">
+          <div className="animate-fade-in space-y-4">
+            <div className="grid gap-4 lg:grid-cols-[1fr_1fr]">
               {/* Left: molecule card */}
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {predictMoleculeData ? (
                   <>
-                    <div className="rounded-xl bg-white p-6 flex items-center justify-center min-h-[300px] overflow-hidden">
+                    <div className="rounded-xl bg-white p-4 flex items-center justify-center max-h-[280px] overflow-hidden">
                       <div
-                        className="w-full [&>svg]:max-w-full [&>svg]:h-auto"
+                        className="w-full h-full flex items-center justify-center [&>svg]:max-w-full [&>svg]:max-h-[240px] [&>svg]:h-auto [&>svg]:object-contain"
                         dangerouslySetInnerHTML={{ __html: predictMoleculeData.svg }}
                       />
                     </div>
-                    <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
+                    <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4 grid grid-cols-2 gap-x-4">
                       <PropRow
                         label="Formula"
                         value={predictMoleculeData.physicochemical.formula}
@@ -439,7 +439,7 @@ function AnalysisPage() {
                     </div>
                   </>
                 ) : (
-                  <div className="rounded-xl border border-slate-800 bg-slate-900/40 p-6 min-h-[300px] flex items-center justify-center">
+                  <div className="rounded-xl border border-slate-800 bg-slate-900/40 p-6 max-h-[280px] flex items-center justify-center">
                     <p className="text-sm text-slate-500 text-center">
                       Molecule visualization unavailable.
                     </p>
@@ -448,29 +448,31 @@ function AnalysisPage() {
               </div>
 
               {/* Right: prediction results */}
-              <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-6 space-y-6">
+              <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-5 space-y-3">
                 <div>
-                  <p
-                    className={`text-3xl font-bold ${
-                      predictionResult.prediction === "Active"
-                        ? "text-emerald-400"
-                        : "text-red-400"
-                    }`}
-                  >
-                    {predictionResult.prediction}
-                  </p>
-                  <p className="mt-3 text-4xl font-bold text-slate-100">
-                    {(predictionResult.probability * 100).toFixed(1)}%
-                  </p>
-                  <p className="mt-1 text-xs text-slate-500">Probability</p>
-                  <p className="mt-3 text-sm text-slate-400">
+                  <div className="flex items-baseline gap-3">
+                    <p
+                      className={`text-2xl font-bold ${
+                        predictionResult.prediction === "Active"
+                          ? "text-emerald-400"
+                          : "text-red-400"
+                      }`}
+                    >
+                      {predictionResult.prediction}
+                    </p>
+                    <p className="text-3xl font-bold text-slate-100">
+                      {(predictionResult.probability * 100).toFixed(1)}%
+                    </p>
+                    <p className="text-xs text-slate-500">probability</p>
+                  </div>
+                  <p className="mt-1.5 text-sm text-slate-400">
                     {predictionResult.prediction === "Active"
                       ? "This molecule is predicted to inhibit cancer cell growth — a candidate anti-cancer compound."
                       : "This molecule is predicted to show no significant anti-cancer activity in this screen."}
                   </p>
                 </div>
 
-                <div className="relative h-2.5 rounded-full bg-slate-800 w-full">
+                <div className="relative h-2 rounded-full bg-slate-800 w-full">
                   <div
                     className="absolute inset-y-0 left-0 rounded-full bg-emerald-500"
                     style={{ width: `${predictionResult.probability * 100}%` }}
@@ -482,21 +484,21 @@ function AnalysisPage() {
                   />
                 </div>
 
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="rounded-lg border border-slate-800 p-3 text-center">
-                    <p className="text-xs text-slate-500 mb-1">Model</p>
-                    <p className="text-sm text-slate-200">{predictionResult.model_name}</p>
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="rounded-lg border border-slate-800 p-2 text-center">
+                    <p className="text-[10px] text-slate-500 mb-0.5">Model</p>
+                    <p className="text-xs text-slate-200 truncate">{predictionResult.model_name}</p>
                   </div>
-                  <div className="rounded-lg border border-slate-800 p-3 text-center">
-                    <p className="text-xs text-slate-500 mb-1">Threshold</p>
-                    <p className="text-sm text-slate-200">
+                  <div className="rounded-lg border border-slate-800 p-2 text-center">
+                    <p className="text-[10px] text-slate-500 mb-0.5">Threshold</p>
+                    <p className="text-xs text-slate-200">
                       {predictionResult.threshold.toFixed(2)}
                     </p>
                   </div>
-                  <div className="rounded-lg border border-slate-800 p-3 text-center">
-                    <p className="text-xs text-slate-500 mb-1">Confidence</p>
+                  <div className="rounded-lg border border-slate-800 p-2 text-center">
+                    <p className="text-[10px] text-slate-500 mb-0.5">Confidence</p>
                     <span
-                      className={`inline-block text-xs font-medium px-2.5 py-0.5 rounded-full border ${
+                      className={`inline-block text-xs font-medium px-2 py-0.5 rounded-full border ${
                         confidence === "High confidence"
                           ? "bg-emerald-900/50 text-emerald-400 border-emerald-700/50"
                           : "bg-amber-900/50 text-amber-400 border-amber-700/50"
@@ -510,8 +512,8 @@ function AnalysisPage() {
             </div>
 
             {/* Pipeline info */}
-            <div className="rounded-xl border border-slate-800 bg-slate-900/40 p-5">
-              <h2 className="text-sm font-medium text-slate-400 mb-3">Pipeline</h2>
+            <div className="rounded-xl border border-slate-800 bg-slate-900/40 p-4">
+              <h2 className="text-sm font-medium text-slate-400 mb-2">Pipeline</h2>
               <p className="text-xs font-mono text-slate-500 leading-relaxed">
                 SMILES → Graph → WL kernel (3329-dim) → FDDL sparse coding (32-dim) →
                 MaxAbsScaler → {predictionResult.model_name}
