@@ -63,18 +63,25 @@ def run_training(
 
     df = pd.read_csv(file_path)
     smiles_list = df[smiles_column].tolist()
-    labels = df[target_column].tolist()
 
-    # Convert labels to int (handle string labels like "active"/"inactive")
-    unique_labels = sorted(set(labels))
+    # Convert labels to numpy array
+    labels_raw = df[target_column].tolist()
+    unique_labels = sorted(set(labels_raw))
     if len(unique_labels) != 2:
         raise ValueError(f"Expected binary classification (2 classes), got {len(unique_labels)}: {unique_labels}")
 
-    # Map to -1/1 if not already numeric
-    if not all(isinstance(l, (int, float)) for l in labels):
+    # Always map to -1/1 for the WL encoder
+    # Convert to numeric first if strings
+    try:
+        numeric_labels = [float(l) for l in labels_raw]
+        unique_numeric = sorted(set(numeric_labels))
+        # Map smaller value to -1, larger to 1
+        label_map = {unique_numeric[0]: -1, unique_numeric[1]: 1}
+        labels = np.array([label_map[l] for l in numeric_labels], dtype=int)
+    except (ValueError, TypeError):
+        # String labels - map alphabetically first to -1, second to 1
         label_map = {unique_labels[0]: -1, unique_labels[1]: 1}
-        labels = [label_map[l] for l in labels]
-    labels = np.array(labels, dtype=int)
+        labels = np.array([label_map[l] for l in labels_raw], dtype=int)
 
     # Convert SMILES to graphs, skip invalid ones
     graphs = []
