@@ -9,6 +9,65 @@ export async function checkTrainerHealth(): Promise<boolean> {
   }
 }
 
+export async function uploadDatasetFile(file: File): Promise<string> {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const res = await fetch(`${TRAINER_BASE}/upload`, {
+    method: "POST",
+    body: formData,
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.detail || `Upload failed: ${res.status}`);
+  }
+  const data = await res.json();
+  return data.file_path as string;
+}
+
+export interface DirectoryEntry {
+  name: string;
+  path: string;
+}
+
+export interface BrowseDirectoriesResult {
+  current_path: string;
+  parent_path: string | null;
+  directories: DirectoryEntry[];
+}
+
+export async function browseDirectories(path?: string): Promise<BrowseDirectoriesResult> {
+  const url = new URL(`${TRAINER_BASE}/browse-directories`);
+  if (path) url.searchParams.set("path", path);
+  const res = await fetch(url.toString());
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.detail || `Failed to browse directory: ${res.status}`);
+  }
+  return res.json();
+}
+
+export async function createDirectory(path: string): Promise<string> {
+  const res = await fetch(`${TRAINER_BASE}/browse-directories/create`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ path }),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.detail || `Failed to create directory: ${res.status}`);
+  }
+  const data = await res.json();
+  return data.path as string;
+}
+
+export async function listDrives(): Promise<string[]> {
+  const res = await fetch(`${TRAINER_BASE}/browse-directories/drives`);
+  if (!res.ok) throw new Error(`Failed to list drives: ${res.status}`);
+  const data = await res.json();
+  return data.drives as string[];
+}
+
 interface InvalidRow {
   row: number;
   smiles: string;

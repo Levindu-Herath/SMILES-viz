@@ -24,6 +24,7 @@ src/smiles_viz_trainer/server/app.py
 src/smiles_viz_trainer/server/routers/__init__.py
 src/smiles_viz_trainer/server/routers/health.py
 src/smiles_viz_trainer/server/routers/train.py
+src/smiles_viz_trainer/server/routers/upload.py
 src/smiles_viz_trainer/server/routers/validate.py
 src/smiles_viz_trainer/server/schemas/__init__.py
 src/smiles_viz_trainer/server/schemas/training.py

@@ -22,6 +22,15 @@ TARGET_COLUMN_CANDIDATES = [
     "active",
     "outcome",
     "y",
+    "p_np",
+    "Class",
+    "class_label",
+    "inactive",
+    "toxicity",
+    "soluble",
+    "permeable",
+    "label_binary",
+    "y_true",
 ]
 
 
@@ -79,16 +88,12 @@ def _detect_smiles_column(df: pd.DataFrame) -> str | None:
 
 
 def _detect_target_column(df: pd.DataFrame, smiles_column: str | None) -> str | None:
-    for candidate in TARGET_COLUMN_CANDIDATES:
-        if candidate in df.columns and candidate != smiles_column:
-            return candidate
+    columns_by_lower = {column.lower(): column for column in df.columns if column != smiles_column}
 
-    lowered_candidates = {c.lower() for c in TARGET_COLUMN_CANDIDATES}
-    for column in df.columns:
-        if column == smiles_column:
-            continue
-        if column.lower() in lowered_candidates:
-            return column
+    for candidate in TARGET_COLUMN_CANDIDATES:
+        match = columns_by_lower.get(candidate.lower())
+        if match is not None:
+            return match
 
     return None
 

@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+.venv/
+.env
+sparsegraphs/artifacts/
+sparsegraphs/results/
+*.bak
