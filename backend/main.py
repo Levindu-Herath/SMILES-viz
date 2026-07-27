@@ -6,11 +6,15 @@ Creates the FastAPI app, registers middleware and routers.
 import os
 import sys
 
-conda_prefix = os.environ.get("CONDA_PREFIX")
-if conda_prefix and sys.platform == "win32":
-    dll_dir = os.path.join(conda_prefix, "Library", "bin")
-    if os.path.isdir(dll_dir):
-        os.add_dll_directory(dll_dir)
+_conda_prefix = os.environ.get("CONDA_PREFIX", "")
+if _conda_prefix:
+    for _dll_dir in [
+        os.path.join(_conda_prefix, "Library", "bin"),
+        os.path.join(_conda_prefix, "Library", "lib"),
+        os.path.join(_conda_prefix, "DLLs"),
+    ]:
+        if os.path.isdir(_dll_dir):
+            os.add_dll_directory(_dll_dir)
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware

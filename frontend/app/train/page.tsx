@@ -1,17 +1,53 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { FolderBrowserModal } from "@/components/FolderBrowserModal";
 import {
   checkTrainerHealth,
   getTrainingResult,
   getTrainingStatus,
   startTraining,
   subscribeToTraining,
+  uploadDatasetFile,
   validateDataset,
   type DatasetValidationResult,
   type JobStatus,
   type TrainingResult,
 } from "@/lib/trainer-api";
+
+function FileIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" className="h-4 w-4">
+      <path
+        d="M6 3.5h8l4 4v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-16a1 1 0 0 1 1-1Z"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path d="M14 3.5v4h4" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function FolderIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" className="h-4 w-4">
+      <path
+        d="M3.5 6.5a1 1 0 0 1 1-1H9l2 2h8.5a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1h-15a1 1 0 0 1-1-1v-12Z"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function SpinnerIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4 animate-spin">
+      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" strokeOpacity="0.25" />
+      <path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
 
 const CLASSIFIERS = [
   { value: "logistic_regression", label: "Logistic Regression" },
@@ -49,6 +85,8 @@ export default function TrainPage() {
   // Dataset / form state
   const [filePath, setFilePath] = useState("");
   const [validating, setValidating] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState("");
   const [validation, setValidation] = useState<DatasetValidationResult | null>(null);
   const [validationError, setValidationError] = useState("");
   const [showInvalidRows, setShowInvalidRows] = useState(false);
@@ -56,6 +94,7 @@ export default function TrainPage() {
   const [targetColumn, setTargetColumn] = useState("");
   const [classifier, setClassifier] = useState<string>(CLASSIFIERS[0].value);
   const [outputDir, setOutputDir] = useState("");
+  const [showFolderModal, setShowFolderModal] = useState(false);
   const [startError, setStartError] = useState("");
   const [starting, setStarting] = useState(false);
 
@@ -67,6 +106,41 @@ export default function TrainPage() {
   const [failureError, setFailureError] = useState("");
 
   const unsubscribeRef = useRef<(() => void) | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  function clearFilePath() {
+    setFilePath("");
+    setValidation(null);
+    setValidationError("");
+    setUploadError("");
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }
+
+  function handleBrowseClick() {
+    fileInputRef.current?.click();
+  }
+
+  function clearOutputDir() {
+    setOutputDir("");
+  }
+
+  async function handleFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    setUploadError("");
+    setValidation(null);
+    setValidationError("");
+    try {
+      const path = await uploadDatasetFile(file);
+      setFilePath(path);
+    } catch (err: unknown) {
+      setUploadError(err instanceof Error ? err.message : "Failed to upload file.");
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }
 
   function cleanupSubscription() {
     if (unsubscribeRef.current) {
@@ -267,17 +341,46 @@ export default function TrainPage() {
                   Dataset file path
                 </label>
                 <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <input
+                      type="text"
+                      value={filePath}
+                      onChange={(e) => {
+                        setFilePath(e.target.value);
+                        setValidation(null);
+                        setValidationError("");
+                      }}
+                      placeholder="C:\path\to\dataset.csv"
+                      className="w-full rounded-lg border border-slate-700 bg-slate-900 pl-4 pr-9 py-2.5 text-sm text-slate-100 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-colors font-mono"
+                    />
+                    {filePath && (
+                      <button
+                        type="button"
+                        onClick={clearFilePath}
+                        aria-label="Clear file path"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 h-5 w-5 flex items-center justify-center rounded-full text-slate-500 hover:text-slate-200 hover:bg-slate-800 transition-colors"
+                      >
+                        ×
+                      </button>
+                    )}
+                  </div>
                   <input
-                    type="text"
-                    value={filePath}
-                    onChange={(e) => {
-                      setFilePath(e.target.value);
-                      setValidation(null);
-                      setValidationError("");
-                    }}
-                    placeholder="C:\path\to\dataset.csv"
-                    className="flex-1 rounded-lg border border-slate-700 bg-slate-900 px-4 py-2.5 text-sm text-slate-100 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-colors font-mono"
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".csv,.tsv"
+                    onChange={handleFileSelected}
+                    className="hidden"
                   />
+                  <button
+                    type="button"
+                    onClick={handleBrowseClick}
+                    disabled={uploading}
+                    aria-label="Browse for a dataset file"
+                    title="Browse for a dataset file"
+                    className="shrink-0 flex items-center justify-center rounded-lg border border-slate-700 px-3.5 py-2.5 text-slate-200 hover:border-emerald-600 hover:text-emerald-400 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {uploading ? <SpinnerIcon /> : <FileIcon />}
+                  </button>
                   <button
                     type="button"
                     onClick={handleValidate}
@@ -288,6 +391,12 @@ export default function TrainPage() {
                   </button>
                 </div>
               </div>
+
+              {uploadError && (
+                <div className="rounded-lg border border-red-800/60 bg-red-950/40 px-4 py-3 text-sm text-red-300">
+                  {uploadError}
+                </div>
+              )}
 
               {validationError && (
                 <div className="rounded-lg border border-red-800/60 bg-red-950/40 px-4 py-3 text-sm text-red-300">
@@ -434,13 +543,36 @@ export default function TrainPage() {
                   <label className="block text-sm font-medium text-slate-400 mb-1.5">
                     Output directory <span className="text-slate-600">(optional)</span>
                   </label>
-                  <input
-                    type="text"
-                    value={outputDir}
-                    onChange={(e) => setOutputDir(e.target.value)}
-                    placeholder="~/smiles-viz-models/"
-                    className="w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-2.5 text-sm text-slate-100 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-colors font-mono"
-                  />
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <input
+                        type="text"
+                        value={outputDir}
+                        onChange={(e) => setOutputDir(e.target.value)}
+                        placeholder="~/smiles-viz-models/"
+                        className="w-full rounded-lg border border-slate-700 bg-slate-900 pl-4 pr-9 py-2.5 text-sm text-slate-100 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-colors font-mono"
+                      />
+                      {outputDir && (
+                        <button
+                          type="button"
+                          onClick={clearOutputDir}
+                          aria-label="Clear output directory"
+                          className="absolute right-2 top-1/2 -translate-y-1/2 h-5 w-5 flex items-center justify-center rounded-full text-slate-500 hover:text-slate-200 hover:bg-slate-800 transition-colors"
+                        >
+                          ×
+                        </button>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowFolderModal(true)}
+                      aria-label="Browse for an output directory"
+                      title="Browse for an output directory"
+                      className="shrink-0 flex items-center justify-center rounded-lg border border-slate-700 px-3.5 py-2.5 text-slate-200 hover:border-emerald-600 hover:text-emerald-400 transition-colors"
+                    >
+                      <FolderIcon />
+                    </button>
+                  </div>
                 </div>
 
                 {startError && (
@@ -575,6 +707,16 @@ export default function TrainPage() {
           </div>
         )}
       </div>
+
+      <FolderBrowserModal
+        isOpen={showFolderModal}
+        onClose={() => setShowFolderModal(false)}
+        onSelect={(path) => {
+          setOutputDir(path);
+          setShowFolderModal(false);
+        }}
+        title="Select output directory"
+      />
     </main>
   );
 }

@@ -1,9 +1,19 @@
 import os
 
+_conda_prefix = os.environ.get("CONDA_PREFIX", "")
+if _conda_prefix:
+    for _dll_dir in [
+        os.path.join(_conda_prefix, "Library", "bin"),
+        os.path.join(_conda_prefix, "Library", "lib"),
+        os.path.join(_conda_prefix, "DLLs"),
+    ]:
+        if os.path.isdir(_dll_dir):
+            os.add_dll_directory(_dll_dir)
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from smiles_viz_trainer.server.routers import health, train, validate
+from smiles_viz_trainer.server.routers import health, train, upload, validate
 
 DEFAULT_ORIGINS = ["http://localhost:3000", "http://127.0.0.1:3000"]
 
@@ -28,5 +38,6 @@ def create_app() -> FastAPI:
     app.include_router(health.router)
     app.include_router(validate.router)
     app.include_router(train.router)
+    app.include_router(upload.router)
 
     return app

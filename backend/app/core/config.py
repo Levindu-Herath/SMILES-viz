@@ -3,9 +3,12 @@ Application configuration.
 Reads from environment variables with sensible defaults.
 """
 
+import json
 from pathlib import Path
+from typing import Annotated
 
-from pydantic_settings import BaseSettings
+from pydantic import field_validator
+from pydantic_settings import BaseSettings, NoDecode
 
 # backend/app/core/config.py -> backend/
 BACKEND_DIR = Path(__file__).resolve().parents[2]
@@ -16,8 +19,23 @@ class Settings(BaseSettings):
     APP_VERSION: str = "2.0.0"
     DEBUG: bool = False
 
-    # CORS
-    CORS_ORIGINS: list[str] = ["http://localhost:3000"]
+    # CORS (comma-separated string via env var, e.g. "https://a.com,https://b.com")
+    CORS_ORIGINS: Annotated[list[str], NoDecode] = ["http://localhost:3000"]
+
+    @field_validator("CORS_ORIGINS", mode="before")
+    @classmethod
+    def _parse_cors_origins(cls, v):
+        if isinstance(v, str):
+            # Support the legacy JSON-array format (e.g. `["http://a.com"]`)
+            # as well as a plain comma-separated string.
+            try:
+                decoded = json.loads(v)
+                if isinstance(decoded, list):
+                    return decoded
+            except json.JSONDecodeError:
+                pass
+            return [origin.strip() for origin in v.split(",") if origin.strip()]
+        return v
 
     # Server
     HOST: str = "0.0.0.0"
