@@ -3,6 +3,8 @@ Router for molecule visualization endpoints.
 Thin HTTP layer — all logic lives in the service.
 """
 
+from typing import Optional
+
 from fastapi import APIRouter, Depends, HTTPException
 
 from app.core.auth import get_current_user
@@ -15,9 +17,9 @@ router = APIRouter(prefix="/api", tags=["molecule"])
 @router.post("/visualize", response_model=MoleculeResponse)
 def visualize_smiles(
     req: SmilesRequest,
-    user: dict = Depends(get_current_user),
+    user: Optional[dict] = Depends(get_current_user),
 ):
-    """Protected endpoint — requires a valid Supabase JWT."""
+    """Auth optional."""
     try:
         return analyze_molecule(req.smiles)
     except ValueError as exc:

@@ -3,6 +3,8 @@ Router for molecular activity prediction endpoints.
 Thin HTTP layer — pipeline logic lives in ml_pipeline.inference.
 """
 
+from typing import Optional
+
 from fastapi import APIRouter, Depends, HTTPException
 
 from app.core.auth import get_current_user
@@ -28,9 +30,9 @@ _MODEL_METRICS = {
 @router.post("", response_model=PredictionResponse)
 def predict_activity(
     req: PredictionRequest,
-    user: dict = Depends(get_current_user),
+    user: Optional[dict] = Depends(get_current_user),
 ):
-    """Protected endpoint — requires a valid Supabase JWT."""
+    """Auth optional."""
     try:
         result = get_predictor().predict(req.smiles, req.model_name)
     except ValueError as exc:
@@ -40,9 +42,9 @@ def predict_activity(
 
 @router.get("/models", response_model=AvailableModelsResponse)
 def list_models(
-    user: dict = Depends(get_current_user),
+    user: Optional[dict] = Depends(get_current_user),
 ):
-    """Protected endpoint — requires a valid Supabase JWT."""
+    """Auth optional."""
     predictor = get_predictor()
     models = [
         ModelInfo(

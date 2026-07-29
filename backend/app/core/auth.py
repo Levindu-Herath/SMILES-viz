@@ -13,13 +13,17 @@ import time
 import urllib.request
 from urllib.error import URLError
 
+from typing import Optional
+
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
 
 from app.core.config import settings
 
-security = HTTPBearer()
+# auto_error=False so requests without an Authorization header are let through
+# (as unauthenticated) instead of FastAPI raising a 403 before we even get a look.
+security = HTTPBearer(auto_error=False)
 
 _JWKS_CACHE_TTL_SECONDS = 3600
 _jwks_cache: dict = {"keys": [], "fetched_at": 0.0}
@@ -62,16 +66,22 @@ def _get_signing_key(kid: str) -> dict:
 
 
 def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(security),
-) -> dict:
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
+) -> Optional[dict]:
     """
-    Decode and verify the Supabase JWT from the Authorization header.
+    Decode and verify the Supabase JWT from the Authorization header, if present.
 
-    Returns the token payload containing user info:
+    Auth is optional: requests with no (or an invalid) token are treated as
+    unauthenticated rather than rejected. Returns the token payload containing
+    user info when a valid token is present:
         - sub: user UUID
         - email: user email
         - role: "authenticated"
+    Returns None when there is no credentials/token.
     """
+    if credentials is None:
+        return None
+
     token = credentials.credentials
 
     try:

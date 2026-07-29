@@ -20,14 +20,21 @@ async function getAuthToken(): Promise<string> {
 }
 
 async function getAuthHeaders(): Promise<Record<string, string>> {
-  const token = await getAuthToken();
-  return {
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${token}`,
-  };
+  try {
+    const token = await getAuthToken();
+    return {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    };
+  } catch {
+    // No session — auth is optional, so proceed unauthenticated.
+    return {
+      "Content-Type": "application/json",
+    };
+  }
 }
 
-class ApiError extends Error {
+export class ApiError extends Error {
   constructor(
     message: string,
     public status: number,
@@ -47,7 +54,7 @@ export async function visualizeMolecule(smiles: string): Promise<MoleculeData> {
   });
 
   if (res.status === 401) {
-    throw new ApiError("Session expired. Please log in again.", 401);
+    throw new ApiError("Sign in required for this feature.", 401);
   }
 
   if (!res.ok) {
@@ -66,7 +73,7 @@ export async function getAvailableModels(): Promise<AvailableModelsResponse> {
   });
 
   if (res.status === 401) {
-    throw new ApiError("Session expired. Please log in again.", 401);
+    throw new ApiError("Sign in required for this feature.", 401);
   }
 
   if (!res.ok) {
@@ -90,7 +97,7 @@ export async function predictActivity(
   });
 
   if (res.status === 401) {
-    throw new ApiError("Session expired. Please log in again.", 401);
+    throw new ApiError("Sign in required for this feature.", 401);
   }
 
   if (!res.ok) {
@@ -106,7 +113,13 @@ export async function uploadDataset(
   name: string,
   description: string,
 ): Promise<UploadResponse> {
-  const token = await getAuthToken();
+  let authHeaders: Record<string, string> = {};
+  try {
+    const token = await getAuthToken();
+    authHeaders = { Authorization: `Bearer ${token}` };
+  } catch {
+    // No session — auth is optional, so proceed unauthenticated.
+  }
 
   const formData = new FormData();
   formData.append("file", file);
@@ -115,12 +128,12 @@ export async function uploadDataset(
 
   const res = await fetch(`${getApiBase()}/api/datasets/upload`, {
     method: "POST",
-    headers: { Authorization: `Bearer ${token}` },
+    headers: authHeaders,
     body: formData,
   });
 
   if (res.status === 401) {
-    throw new ApiError("Session expired. Please log in again.", 401);
+    throw new ApiError("Sign in required for this feature.", 401);
   }
 
   if (!res.ok) {
@@ -139,7 +152,7 @@ export async function listDatasets(): Promise<DatasetListResponse> {
   });
 
   if (res.status === 401) {
-    throw new ApiError("Session expired. Please log in again.", 401);
+    throw new ApiError("Sign in required for this feature.", 401);
   }
 
   if (!res.ok) {
@@ -158,7 +171,7 @@ export async function getDownloadUrl(datasetId: string): Promise<DownloadUrlResp
   });
 
   if (res.status === 401) {
-    throw new ApiError("Session expired. Please log in again.", 401);
+    throw new ApiError("Sign in required for this feature.", 401);
   }
 
   if (!res.ok) {
@@ -178,7 +191,7 @@ export async function deleteDataset(datasetId: string): Promise<void> {
   });
 
   if (res.status === 401) {
-    throw new ApiError("Session expired. Please log in again.", 401);
+    throw new ApiError("Sign in required for this feature.", 401);
   }
 
   if (!res.ok) {

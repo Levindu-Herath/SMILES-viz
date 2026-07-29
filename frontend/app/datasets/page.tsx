@@ -1,13 +1,21 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { deleteDataset, getDownloadUrl, listDatasets, uploadDataset } from "@/lib/api";
 import type { Dataset } from "@/types/dataset";
 
 const ACCEPTED_EXTENSIONS = ".csv,.txt,.zip,.tsv";
+
+function LockIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" className="h-7 w-7">
+      <rect x="5" y="11" width="14" height="9" rx="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M8 11V7.5a4 4 0 0 1 8 0V11" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
 
 function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -247,8 +255,7 @@ function DatasetDetailModal({
 }
 
 function DatasetsPage() {
-  const router = useRouter();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
 
   const [datasets, setDatasets] = useState<Dataset[]>([]);
   const [loading, setLoading] = useState(true);
@@ -265,10 +272,6 @@ function DatasetsPage() {
       const data = await listDatasets();
       setDatasets(data.datasets);
     } catch (err: unknown) {
-      if (err instanceof Error && err.message.includes("Session expired")) {
-        router.push("/login");
-        return;
-      }
       setError(err instanceof Error ? err.message : "Failed to load datasets.");
     } finally {
       setLoading(false);
@@ -276,9 +279,13 @@ function DatasetsPage() {
   }
 
   useEffect(() => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
     refresh();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     if (!successMessage) return;
@@ -298,10 +305,6 @@ function DatasetsPage() {
       const { url } = await getDownloadUrl(dataset.id);
       window.open(url, "_blank");
     } catch (err: unknown) {
-      if (err instanceof Error && err.message.includes("Session expired")) {
-        router.push("/login");
-        return;
-      }
       setError(err instanceof Error ? err.message : "Failed to get download link.");
     }
   }
@@ -314,12 +317,42 @@ function DatasetsPage() {
       setSelectedDataset(null);
       refresh();
     } catch (err: unknown) {
-      if (err instanceof Error && err.message.includes("Session expired")) {
-        router.push("/login");
-        return;
-      }
       setError(err instanceof Error ? err.message : "Failed to delete dataset.");
     }
+  }
+
+  if (authLoading) {
+    return (
+      <main className="min-h-screen bg-surface-bg text-text-primary">
+        <div className="mx-auto max-w-6xl px-6 py-8">
+          <p className="text-sm text-text-muted">Loading…</p>
+        </div>
+      </main>
+    );
+  }
+
+  if (!user) {
+    return (
+      <main className="min-h-screen bg-surface-bg text-text-primary">
+        <div className="mx-auto max-w-4xl px-6 py-16">
+          <div className="flex flex-col items-center justify-center rounded-xl border border-surface-border bg-surface-card p-12 text-center">
+            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-surface-bg text-text-muted">
+              <LockIcon />
+            </div>
+            <h2 className="mb-2 text-xl font-semibold text-text-primary">Sign in required</h2>
+            <p className="mb-6 text-sm text-text-secondary">
+              Sign in to upload and manage your datasets.
+            </p>
+            <a
+              href="/login"
+              className="rounded-lg bg-primary-500 px-6 py-2.5 text-sm font-semibold text-white hover:bg-primary-600 active:bg-primary-700 transition-colors duration-150"
+            >
+              Sign in
+            </a>
+          </div>
+        </div>
+      </main>
+    );
   }
 
   return (
