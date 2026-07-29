@@ -31,6 +31,12 @@ TARGET_COLUMN_CANDIDATES = [
     "permeable",
     "label_binary",
     "y_true",
+    "value",
+    "Value",
+    "result",
+    "Result",
+    "response",
+    "Response",
 ]
 
 

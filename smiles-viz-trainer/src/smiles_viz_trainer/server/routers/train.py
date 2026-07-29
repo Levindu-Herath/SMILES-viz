@@ -63,6 +63,9 @@ async def start_training(req: TrainRequest):
     smiles_col = req.smiles_column or validation.detected_smiles_column
     target_col = req.target_column or validation.detected_target_column
 
+    if validation.file_format == "csv" and not smiles_col:
+        raise HTTPException(status_code=400, detail="smiles_column is required for CSV datasets")
+
     try:
         job_id = job_manager.create_job(req.classifier)
     except ValueError:

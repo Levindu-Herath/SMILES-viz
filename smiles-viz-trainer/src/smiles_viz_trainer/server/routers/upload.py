@@ -8,7 +8,7 @@ from pydantic import BaseModel
 
 router = APIRouter()
 
-ALLOWED_EXTENSIONS = {".csv", ".tsv"}
+ALLOWED_EXTENSIONS = {".csv", ".tsv", ".sdf"}
 UPLOAD_DIR = Path.home() / "smiles-viz-uploads"
 
 
@@ -20,7 +20,7 @@ async def upload_dataset(file: UploadFile):
     if ext not in ALLOWED_EXTENSIONS:
         raise HTTPException(
             status_code=400,
-            detail=f"Unsupported file type '{ext}'. Only .csv and .tsv files are accepted.",
+            detail=f"Unsupported file type '{ext}'. Only .csv, .tsv, and .sdf files are accepted.",
         )
 
     UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
@@ -40,10 +40,18 @@ class DirectoryEntry(BaseModel):
     path: str
 
 
+class FileEntry(BaseModel):
+    name: str
+    path: str
+    extension: str
+    size_bytes: int
+
+
 class BrowseDirectoriesResponse(BaseModel):
     current_path: str
     parent_path: str | None
     directories: list[DirectoryEntry]
+    files: list[FileEntry] = []
 
 
 class CreateDirectoryRequest(BaseModel):
@@ -59,7 +67,11 @@ class DrivesResponse(BaseModel):
 
 
 @router.get("/browse-directories", response_model=BrowseDirectoriesResponse)
-async def browse_directories(path: str | None = None):
+async def browse_directories(
+    path: str | None = None,
+    include_files: bool = False,
+    file_extensions: str | None = None,
+):
     target = Path(path) if path else Path.home()
 
     if not target.is_dir():
@@ -67,7 +79,12 @@ async def browse_directories(path: str | None = None):
 
     target = target.resolve()
 
+    allowed_exts = set()
+    if file_extensions:
+        allowed_exts = {ext.strip().lower() for ext in file_extensions.split(",")}
+
     directories: list[DirectoryEntry] = []
+    files: list[FileEntry] = []
     try:
         entries = sorted(target.iterdir(), key=lambda p: p.name.lower())
     except PermissionError:
@@ -77,6 +94,17 @@ async def browse_directories(path: str | None = None):
         try:
             if entry.is_dir():
                 directories.append(DirectoryEntry(name=entry.name, path=str(entry)))
+            elif include_files and entry.is_file():
+                ext = entry.suffix.lower()
+                if not allowed_exts or ext in allowed_exts:
+                    files.append(
+                        FileEntry(
+                            name=entry.name,
+                            path=str(entry),
+                            extension=ext,
+                            size_bytes=entry.stat().st_size,
+                        )
+                    )
         except (PermissionError, OSError):
             continue
 
@@ -87,6 +115,7 @@ async def browse_directories(path: str | None = None):
         current_path=str(target),
         parent_path=parent_path,
         directories=directories,
+        files=files,
     )
 
 

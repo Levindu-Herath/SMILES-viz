@@ -174,6 +174,7 @@ export default function TrainPage() {
   const [classifier, setClassifier] = useState<string>(CLASSIFIERS[0].value);
   const [outputDir, setOutputDir] = useState("");
   const [showFolderModal, setShowFolderModal] = useState(false);
+  const [showDatasetBrowserModal, setShowDatasetBrowserModal] = useState(false);
   const [startError, setStartError] = useState("");
   const [starting, setStarting] = useState(false);
 
@@ -186,6 +187,8 @@ export default function TrainPage() {
 
   const unsubscribeRef = useRef<(() => void) | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const isSdfDataset = validation?.file_format === "sdf";
 
   function clearFilePath() {
     setFilePath("");
@@ -472,7 +475,7 @@ export default function TrainPage() {
                         setValidation(null);
                         setValidationError("");
                       }}
-                      placeholder="C:\path\to\dataset.csv"
+                      placeholder="C:\path\to\dataset.csv or .sdf"
                       className="w-full rounded-md border border-surface-border bg-surface-card pl-4 pr-9 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary-300 focus:ring-offset-2 focus:border-primary-500 transition-colors duration-150 font-mono"
                     />
                     {filePath && (
@@ -489,7 +492,7 @@ export default function TrainPage() {
                   <input
                     ref={fileInputRef}
                     type="file"
-                    accept=".csv,.tsv"
+                    accept=".csv,.tsv,.sdf"
                     onChange={handleFileSelected}
                     className="hidden"
                   />
@@ -497,11 +500,20 @@ export default function TrainPage() {
                     type="button"
                     onClick={handleBrowseClick}
                     disabled={uploading}
-                    aria-label="Browse for a dataset file"
-                    title="Browse for a dataset file"
+                    aria-label="Upload a dataset file"
+                    title="Upload a dataset file"
                     className="shrink-0 flex items-center justify-center rounded-md border border-surface-border px-3.5 py-2.5 text-text-secondary hover:border-primary-300 hover:bg-primary-50 hover:text-primary-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors duration-150"
                   >
                     {uploading ? <SpinnerIcon /> : <FileIcon />}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowDatasetBrowserModal(true)}
+                    aria-label="Browse for a dataset file on the server"
+                    title="Browse for a dataset file on the server"
+                    className="shrink-0 flex items-center justify-center rounded-md border border-surface-border px-3.5 py-2.5 text-text-secondary hover:border-primary-300 hover:bg-primary-50 hover:text-primary-500 transition-colors duration-150"
+                  >
+                    <FolderIcon />
                   </button>
                   <button
                     type="button"
@@ -604,38 +616,46 @@ export default function TrainPage() {
 
             {validation?.is_valid && (
               <div className="rounded-lg border border-surface-border bg-surface-card p-6 space-y-5">
-                <div className="grid sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-text-secondary mb-1.5">
-                      SMILES column
-                    </label>
-                    <select
-                      value={smilesColumn}
-                      onChange={(e) => setSmilesColumn(e.target.value)}
-                      className="w-full rounded-md border border-surface-border bg-surface-card px-4 py-2.5 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary-300 focus:ring-offset-2 focus:border-primary-500 transition-colors duration-150"
-                    >
-                      {validation.columns.map((col) => (
-                        <option key={col} value={col}>
-                          {col}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                <div className={`grid gap-4 ${isSdfDataset ? "" : "sm:grid-cols-2"}`}>
+                  {!isSdfDataset && (
+                    <div>
+                      <label className="block text-sm font-medium text-text-secondary mb-1.5">
+                        SMILES column
+                      </label>
+                      <select
+                        value={smilesColumn}
+                        onChange={(e) => setSmilesColumn(e.target.value)}
+                        className="w-full rounded-md border border-surface-border bg-surface-card px-4 py-2.5 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary-300 focus:ring-offset-2 focus:border-primary-500 transition-colors duration-150"
+                      >
+                        {validation.columns.map((col) => (
+                          <option key={col} value={col}>
+                            {col}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
                   <div>
                     <label className="block text-sm font-medium text-text-secondary mb-1.5">
                       Target column
                     </label>
-                    <select
-                      value={targetColumn}
-                      onChange={(e) => setTargetColumn(e.target.value)}
-                      className="w-full rounded-md border border-surface-border bg-surface-card px-4 py-2.5 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary-300 focus:ring-offset-2 focus:border-primary-500 transition-colors duration-150"
-                    >
-                      {validation.columns.map((col) => (
-                        <option key={col} value={col}>
-                          {col}
-                        </option>
-                      ))}
-                    </select>
+                    {isSdfDataset ? (
+                      <p className="w-full rounded-md border border-surface-border bg-surface-bg px-4 py-2.5 text-sm text-text-primary">
+                        {targetColumn || "—"}
+                      </p>
+                    ) : (
+                      <select
+                        value={targetColumn}
+                        onChange={(e) => setTargetColumn(e.target.value)}
+                        className="w-full rounded-md border border-surface-border bg-surface-card px-4 py-2.5 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary-300 focus:ring-offset-2 focus:border-primary-500 transition-colors duration-150"
+                      >
+                        {validation.columns.map((col) => (
+                          <option key={col} value={col}>
+                            {col}
+                          </option>
+                        ))}
+                      </select>
+                    )}
                   </div>
                 </div>
 
@@ -838,6 +858,20 @@ export default function TrainPage() {
           setShowFolderModal(false);
         }}
         title="Select output directory"
+      />
+
+      <FolderBrowserModal
+        isOpen={showDatasetBrowserModal}
+        onClose={() => setShowDatasetBrowserModal(false)}
+        onSelect={(path) => {
+          setFilePath(path);
+          setValidation(null);
+          setValidationError("");
+          setShowDatasetBrowserModal(false);
+        }}
+        title="Select dataset"
+        mode="file"
+        fileExtensions=".csv,.sdf"
       />
     </main>
   );

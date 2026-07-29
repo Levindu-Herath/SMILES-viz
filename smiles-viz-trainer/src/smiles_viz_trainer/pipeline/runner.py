@@ -12,7 +12,7 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MaxAbsScaler
 
-from smiles_viz_trainer.pipeline.graph_utils import smiles_to_graph
+from smiles_viz_trainer.pipeline.graph_utils import molecule_to_graph, smiles_to_graph
 from smiles_viz_trainer.pipeline.wl import WL
 from smiles_viz_trainer.pipeline.fddl_gpu import FDDLGPU
 from smiles_viz_trainer.pipeline.evaluator import Evaluator
@@ -34,9 +34,84 @@ CLASSIFIER_MAP = {
 }
 
 
+def _map_labels_to_pm1(labels_raw: list) -> np.ndarray:
+    """Map a list of raw label values to a -1/1 numpy array for the WL encoder."""
+    unique_labels = sorted(set(labels_raw))
+    if len(unique_labels) != 2:
+        raise ValueError(f"Expected binary classification (2 classes), got {len(unique_labels)}: {unique_labels}")
+
+    # Convert to numeric first if strings
+    try:
+        numeric_labels = [float(l) for l in labels_raw]
+        unique_numeric = sorted(set(numeric_labels))
+        # Map smaller value to -1, larger to 1
+        label_map = {unique_numeric[0]: -1, unique_numeric[1]: 1}
+        return np.array([label_map[l] for l in numeric_labels], dtype=int)
+    except (ValueError, TypeError):
+        # String labels - map alphabetically first to -1, second to 1
+        label_map = {unique_labels[0]: -1, unique_labels[1]: 1}
+        return np.array([label_map[l] for l in labels_raw], dtype=int)
+
+
+def _load_csv_dataset(file_path: str, smiles_column: str, target_column: str, update: Callable):
+    """Load a CSV dataset and convert each row's SMILES to a graph, skipping invalid ones."""
+    df = pd.read_csv(file_path)
+    smiles_list = df[smiles_column].tolist()
+    labels = _map_labels_to_pm1(df[target_column].tolist())
+
+    graphs = []
+    valid_labels = []
+    total_molecules = len(smiles_list)
+
+    for i, smi in enumerate(smiles_list):
+        if i % 50 == 0:
+            stage_prog = i / total_molecules
+            update(TrainingStage.VALIDATING, 0.05 * stage_prog, stage_prog, f"Converting molecule {i+1}/{total_molecules}")
+        try:
+            g = smiles_to_graph(str(smi))
+            graphs.append(g)
+            valid_labels.append(labels[i])
+        except (ValueError, Exception):
+            continue
+
+    return graphs, np.array(valid_labels), total_molecules
+
+
+def _load_sdf_dataset(file_path: str, target_column: str, update: Callable):
+    """Load an SDF dataset, building graphs directly from the parsed Mol objects."""
+    from rdkit.Chem import SDMolSupplier
+
+    mols = list(SDMolSupplier(file_path, removeHs=False))
+    total_molecules = len(mols)
+
+    labels_raw = []
+    labeled_mol_indices = []
+    for i, mol in enumerate(mols):
+        if mol is not None and mol.HasProp(target_column):
+            labels_raw.append(mol.GetProp(target_column))
+            labeled_mol_indices.append(i)
+
+    labels = _map_labels_to_pm1(labels_raw)
+
+    graphs = []
+    valid_labels = []
+    for pos, mol_idx in enumerate(labeled_mol_indices):
+        if pos % 50 == 0:
+            stage_prog = pos / total_molecules
+            update(TrainingStage.VALIDATING, 0.05 * stage_prog, stage_prog, f"Converting molecule {pos+1}/{total_molecules}")
+        try:
+            g = molecule_to_graph(mols[mol_idx])
+            graphs.append(g)
+            valid_labels.append(labels[pos])
+        except (ValueError, Exception):
+            continue
+
+    return graphs, np.array(valid_labels), total_molecules
+
+
 def run_training(
     file_path: str,
-    smiles_column: str,
+    smiles_column: Optional[str],
     target_column: str,
     classifier: str,
     output_dir: str,
@@ -61,46 +136,13 @@ def run_training(
     # --- Stage 1: VALIDATING (loading + converting dataset) ---
     update(TrainingStage.VALIDATING, 0.0, 0.0, "Loading dataset...")
 
-    df = pd.read_csv(file_path)
-    smiles_list = df[smiles_column].tolist()
-
-    # Convert labels to numpy array
-    labels_raw = df[target_column].tolist()
-    unique_labels = sorted(set(labels_raw))
-    if len(unique_labels) != 2:
-        raise ValueError(f"Expected binary classification (2 classes), got {len(unique_labels)}: {unique_labels}")
-
-    # Always map to -1/1 for the WL encoder
-    # Convert to numeric first if strings
-    try:
-        numeric_labels = [float(l) for l in labels_raw]
-        unique_numeric = sorted(set(numeric_labels))
-        # Map smaller value to -1, larger to 1
-        label_map = {unique_numeric[0]: -1, unique_numeric[1]: 1}
-        labels = np.array([label_map[l] for l in numeric_labels], dtype=int)
-    except (ValueError, TypeError):
-        # String labels - map alphabetically first to -1, second to 1
-        label_map = {unique_labels[0]: -1, unique_labels[1]: 1}
-        labels = np.array([label_map[l] for l in labels_raw], dtype=int)
-
-    # Convert SMILES to graphs, skip invalid ones
-    graphs = []
-    valid_labels = []
-    total_molecules = len(smiles_list)
-
-    for i, smi in enumerate(smiles_list):
-        if i % 50 == 0:
-            stage_prog = i / total_molecules
-            update(TrainingStage.VALIDATING, 0.05 * stage_prog, stage_prog, f"Converting molecule {i+1}/{total_molecules}")
-        try:
-            g = smiles_to_graph(str(smi))
-            graphs.append(g)
-            valid_labels.append(labels[i])
-        except (ValueError, Exception):
-            continue
+    file_ext = Path(file_path).suffix.lower()
+    if file_ext == ".sdf":
+        graphs, y, total_molecules = _load_sdf_dataset(file_path, target_column, update)
+    else:
+        graphs, y, total_molecules = _load_csv_dataset(file_path, smiles_column, target_column, update)
 
     valid_molecules = len(graphs)
-    y = np.array(valid_labels)
 
     if valid_molecules < 20:
         raise ValueError(f"Only {valid_molecules} valid molecules found. Need at least 20 for training.")

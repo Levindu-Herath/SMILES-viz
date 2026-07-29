@@ -30,15 +30,29 @@ export interface DirectoryEntry {
   path: string;
 }
 
+export interface FileEntry {
+  name: string;
+  path: string;
+  extension: string;
+  size_bytes: number;
+}
+
 export interface BrowseDirectoriesResult {
   current_path: string;
   parent_path: string | null;
   directories: DirectoryEntry[];
+  files: FileEntry[];
 }
 
-export async function browseDirectories(path?: string): Promise<BrowseDirectoriesResult> {
+export async function browseDirectories(
+  path?: string,
+  includeFiles?: boolean,
+  fileExtensions?: string,
+): Promise<BrowseDirectoriesResult> {
   const url = new URL(`${TRAINER_BASE}/browse-directories`);
   if (path) url.searchParams.set("path", path);
+  if (includeFiles) url.searchParams.set("include_files", "true");
+  if (fileExtensions) url.searchParams.set("file_extensions", fileExtensions);
   const res = await fetch(url.toString());
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
