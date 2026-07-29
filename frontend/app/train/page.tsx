@@ -49,6 +49,84 @@ function SpinnerIcon() {
   );
 }
 
+function BookIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" className="h-4 w-4">
+      <path
+        d="M4 5.5a1.5 1.5 0 0 1 1.5-1.5H11v16H5.5A1.5 1.5 0 0 1 4 18.5v-13Z"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M20 5.5A1.5 1.5 0 0 0 18.5 4H13v16h5.5a1.5 1.5 0 0 0 1.5-1.5v-13Z"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function ClipboardIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" className="h-3.5 w-3.5">
+      <rect x="7" y="6" width="12" height="15" rx="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M9.5 6V4.5a1 1 0 0 1 1-1h5a1 1 0 0 1 1 1V6" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M5 9v11.5a1 1 0 0 0 1 1H15" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function CodeBlock({ code }: { code: string }) {
+  const [copied, setCopied] = useState(false);
+
+  async function handleCopy() {
+    try {
+      await navigator.clipboard.writeText(code);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      // Clipboard access unavailable — ignore.
+    }
+  }
+
+  return (
+    <div className="relative rounded-lg border border-surface-border bg-surface-bg px-4 py-3">
+      <button
+        type="button"
+        onClick={handleCopy}
+        aria-label="Copy to clipboard"
+        title="Copy to clipboard"
+        className="absolute top-2 right-2 flex items-center justify-center rounded p-1 text-text-muted hover:text-primary-500 hover:bg-primary-50 transition-colors duration-150"
+      >
+        {copied ? <span className="px-0.5 text-[10px] font-medium">Copied!</span> : <ClipboardIcon />}
+      </button>
+      <pre className="pr-16 text-xs text-text-secondary font-mono whitespace-pre-wrap">{code}</pre>
+    </div>
+  );
+}
+
+function SetupStep({
+  number,
+  title,
+  children,
+}: {
+  number: number;
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center gap-2.5">
+        <span className="h-6 w-6 shrink-0 rounded-full bg-primary-500 text-white text-xs font-semibold flex items-center justify-center">
+          {number}
+        </span>
+        <p className="text-sm font-medium text-text-primary">{title}</p>
+      </div>
+      <div className="pl-8 space-y-1.5">{children}</div>
+    </div>
+  );
+}
+
 const CLASSIFIERS = [
   { value: "logistic_regression", label: "Logistic Regression" },
   { value: "gradient_boosting", label: "Gradient Boosting" },
@@ -81,6 +159,7 @@ function formatMetricLabel(key: string): string {
 
 export default function TrainPage() {
   const [pageState, setPageState] = useState<PageState>("checking");
+  const [setupExpanded, setSetupExpanded] = useState(false);
 
   // Dataset / form state
   const [filePath, setFilePath] = useState("");
@@ -305,31 +384,74 @@ export default function TrainPage() {
         )}
 
         {pageState === "disconnected" && (
-          <div className="rounded-lg border border-info-border bg-info-bg p-8 space-y-5">
-            <div className="flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-info-text" />
-              <h2 className="text-base font-semibold text-info-text">Local Trainer Not Detected</h2>
+          <div className="space-y-4">
+            <div className="rounded-lg border border-info-border bg-info-bg p-8 space-y-5">
+              <div className="flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-info-text" />
+                <h2 className="text-base font-semibold text-info-text">Local trainer not detected</h2>
+              </div>
+              <p className="text-sm text-info-text">
+                The Train page connects to a local training server running on your machine at{" "}
+                <code className="rounded bg-white px-1.5 py-0.5 text-xs text-info-text">
+                  http://localhost:5000
+                </code>
+                .
+              </p>
+              <button
+                type="button"
+                onClick={checkConnection}
+                className="rounded-md bg-primary-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary-600 active:bg-primary-700 transition-colors duration-150"
+              >
+                Retry connection
+              </button>
             </div>
-            <p className="text-sm text-info-text">
-              The Train page talks to a local training server running on your machine at{" "}
-              <code className="rounded bg-white px-1.5 py-0.5 text-xs text-info-text">
-                http://localhost:5000
-              </code>
-              . Install and start it, then retry the connection.
-            </p>
-            <div className="space-y-2">
-              <p className="text-xs font-medium text-info-text uppercase tracking-wide">Setup</p>
-              <pre className="rounded-lg border border-info-border bg-white px-4 py-3 text-xs text-text-primary overflow-x-auto">
-                pip install smiles-viz-trainer{"\n"}smiles-train
-              </pre>
+
+            <div className="rounded-lg border border-surface-border bg-surface-card overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setSetupExpanded((v) => !v)}
+                className="w-full flex items-center gap-2.5 px-5 py-3.5 text-left hover:bg-primary-50 cursor-pointer transition-colors duration-150"
+              >
+                <BookIcon />
+                <span className="text-sm font-medium text-text-primary">Setup guide</span>
+                <span
+                  className={`ml-auto text-text-muted transition-transform duration-200 ${
+                    setupExpanded ? "rotate-180" : ""
+                  }`}
+                >
+                  ▼
+                </span>
+              </button>
+
+              {setupExpanded && (
+                <div className="border-t border-surface-border px-5 py-5 space-y-5">
+                  <SetupStep number={1} title="Create conda environment">
+                    <CodeBlock code={`conda create -n smiles-trainer python=3.11 -y\nconda activate smiles-trainer`} />
+                  </SetupStep>
+
+                  <SetupStep number={2} title="Install RDKit via conda">
+                    <CodeBlock code="conda install -c conda-forge rdkit -y" />
+                    <p className="text-xs text-text-muted italic">RDKit must be installed via conda, not pip</p>
+                  </SetupStep>
+
+                  <SetupStep number={3} title="Install the trainer package">
+                    <CodeBlock code="pip install smiles-viz-trainer" />
+                  </SetupStep>
+
+                  <SetupStep number={4} title="Start the trainer server">
+                    <CodeBlock code="python -m smiles_viz_trainer.cli" />
+                    <p className="text-xs text-text-muted italic">
+                      On Windows, use this instead of the smiles-train command
+                    </p>
+                  </SetupStep>
+
+                  <div className="border-t border-surface-border pt-4 space-y-2">
+                    <p className="text-sm font-medium text-text-primary">Alternative: Docker</p>
+                    <CodeBlock code={`docker pull smiles-viz-trainer\ndocker run -p 5000:5000 smiles-viz-trainer`} />
+                  </div>
+                </div>
+              )}
             </div>
-            <button
-              type="button"
-              onClick={checkConnection}
-              className="rounded-md bg-primary-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary-600 active:bg-primary-700 transition-colors duration-150"
-            >
-              Retry Connection
-            </button>
           </div>
         )}
 
