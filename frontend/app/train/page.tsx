@@ -359,6 +359,19 @@ export default function TrainPage() {
     setTrainingStartedAt(null);
     setElapsed(0);
     setStartError("");
+
+    // Clear the previously selected dataset so the user picks fresh for the next run.
+    setFilePath("");
+    setValidation(null);
+    setValidationError("");
+    setUploadError("");
+    setShowInvalidRows(false);
+    setSmilesColumn("");
+    setTargetColumn("");
+    setClassifier(CLASSIFIERS[0].value);
+    setOutputDir("");
+    if (fileInputRef.current) fileInputRef.current.value = "";
+
     setPageState("form");
   }
 

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "smiles-viz-trainer"
-version = "0.1.0"
+version = "0.2.0"
 description = "Local training server for smiles-viz, exposing a FastAPI API for model training and evaluation."
 readme = "README.md"
 requires-python = ">=3.10"
