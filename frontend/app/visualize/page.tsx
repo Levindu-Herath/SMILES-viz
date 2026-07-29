@@ -1,11 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { MoleculeResults } from "@/components/molecule/MoleculeResults";
 import { PropRow } from "@/components/ui/PropRow";
-import { getAvailableModels, predictActivity, visualizeMolecule } from "@/lib/api";
+import { ApiError, getAvailableModels, predictActivity, visualizeMolecule } from "@/lib/api";
 import type { MoleculeData } from "@/types/molecule";
 import type { ModelInfo, PredictionResult } from "@/types/prediction";
 
@@ -26,6 +25,15 @@ const EXAMPLE_COMPOUNDS = [
 ] as const;
 
 type ResolvedCompound = { name: string; smiles: string; cid: number };
+
+// The backend treats auth as optional, but some features may still require it —
+// surface a friendly nudge instead of a raw "session expired" error.
+function friendlyErrorMessage(err: unknown, fallback: string): string {
+  if (err instanceof ApiError && err.status === 401) {
+    return "Sign in for full access.";
+  }
+  return err instanceof Error ? err.message : fallback;
+}
 
 // Heuristic only -- ambiguous input falls through to a PubChem lookup, and if that
 // fails the raw input is still tried against the backend as a SMILES string, so a
@@ -118,8 +126,6 @@ function ActivityIcon() {
 }
 
 function AnalysisPage() {
-  const router = useRouter();
-
   const [mode, setMode] = useState<Mode>("visualize");
   const [smiles, setSmiles] = useState("");
   const [loading, setLoading] = useState(false);
@@ -146,15 +152,9 @@ function AnalysisPage() {
         setModels(data.models);
       })
       .catch((err: unknown) => {
-        if (err instanceof Error && err.message.includes("Session expired")) {
-          router.push("/login");
-          return;
-        }
-        setModelsError(
-          err instanceof Error ? err.message : "Failed to load available models.",
-        );
+        setModelsError(friendlyErrorMessage(err, "Failed to load available models."));
       });
-  }, [router]);
+  }, []);
 
   function handleModeChange(newMode: Mode) {
     if (newMode === mode) return;
@@ -206,11 +206,7 @@ function AnalysisPage() {
       const data = await visualizeMolecule(resolvedSmiles);
       setVisualizeResult(data);
     } catch (err: unknown) {
-      if (err instanceof Error && err.message.includes("Session expired")) {
-        router.push("/login");
-        return;
-      }
-      setError(err instanceof Error ? err.message : "Failed to connect to the backend.");
+      setError(friendlyErrorMessage(err, "Failed to connect to the backend."));
     } finally {
       setLoading(false);
     }
@@ -244,12 +240,7 @@ function AnalysisPage() {
       setPredictionResult(predictOutcome.value);
     } else {
       const err = predictOutcome.err;
-      if (err instanceof Error && err.message.includes("Session expired")) {
-        router.push("/login");
-        setLoading(false);
-        return;
-      }
-      setError(err instanceof Error ? err.message : "Failed to connect to the backend.");
+      setError(friendlyErrorMessage(err, "Failed to connect to the backend."));
     }
 
     if (visualizeOutcome.ok) {
