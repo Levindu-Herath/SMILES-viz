@@ -5,8 +5,8 @@ interface SectionCardProps {
 
 export function SectionCard({ title, children }: SectionCardProps) {
   return (
-    <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-5">
-      <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">
+    <div className="rounded-lg border border-surface-border bg-surface-card p-5">
+      <h3 className="text-[11px] font-semibold text-primary-500 uppercase tracking-wider mb-4">
         {title}
       </h3>
       {children}

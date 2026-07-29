@@ -21,7 +21,7 @@ export function AuthGuard({ children }: AuthGuardProps) {
   if (loading) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
-        <p className="text-sm text-slate-400">Loading…</p>
+        <p className="text-sm text-text-secondary">Loading…</p>
       </div>
     );
   }

@@ -301,25 +301,25 @@ function AnalysisPage() {
   const hasResults = loading || Boolean(visualizeResult) || Boolean(predictionResult);
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-100">
+    <main className="min-h-screen bg-surface-bg text-text-primary">
       <div className="mx-auto max-w-6xl px-6 py-8 space-y-4">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight">Molecular analysis</h1>
-          <p className="mt-1 text-sm text-slate-400">
+          <h1 className="text-2xl font-semibold tracking-tight text-text-primary">Molecular analysis</h1>
+          <p className="mt-1 text-sm text-text-secondary">
             Explore a molecule&apos;s structure and properties, or predict its potential to fight cancer.
           </p>
         </div>
 
         {/* Mode toggle + description */}
         <div>
-          <div className="inline-flex items-center gap-1 bg-slate-800/50 rounded-lg p-1">
+          <div className="inline-flex items-center gap-1 bg-primary-50 rounded-lg p-1">
             <button
               type="button"
               onClick={() => handleModeChange("visualize")}
               className={
                 mode === "visualize"
-                  ? "bg-emerald-600 text-white rounded-md px-5 py-2 text-sm font-medium shadow-sm transition-all duration-200"
-                  : "text-slate-400 rounded-md px-5 py-2 text-sm font-medium hover:text-slate-200 transition-all duration-200"
+                  ? "bg-primary-500 text-white rounded-md px-5 py-2 text-sm font-medium shadow-sm transition-all duration-150"
+                  : "text-text-secondary rounded-md px-5 py-2 text-sm font-medium hover:text-text-primary transition-all duration-150"
               }
             >
               Visualize
@@ -329,14 +329,14 @@ function AnalysisPage() {
               onClick={() => handleModeChange("predict")}
               className={
                 mode === "predict"
-                  ? "bg-emerald-600 text-white rounded-md px-5 py-2 text-sm font-medium shadow-sm transition-all duration-200"
-                  : "text-slate-400 rounded-md px-5 py-2 text-sm font-medium hover:text-slate-200 transition-all duration-200"
+                  ? "bg-primary-500 text-white rounded-md px-5 py-2 text-sm font-medium shadow-sm transition-all duration-150"
+                  : "text-text-secondary rounded-md px-5 py-2 text-sm font-medium hover:text-text-primary transition-all duration-150"
               }
             >
               Predict
             </button>
           </div>
-          <p className="text-sm text-slate-500 mt-2">
+          <p className="text-sm text-text-secondary mt-2">
             {mode === "visualize"
               ? "View molecular structure, druglikeness, and absorption properties."
               : "Predict anti-cancer activity using an AI model trained on NCI compound data."}
@@ -359,7 +359,7 @@ function AnalysisPage() {
                   if (e.key === "Enter") handleSubmit();
                 }}
                 placeholder="Enter a compound name or SMILES — e.g. aspirin, caffeine, CC(=O)O"
-                className="w-full rounded-lg border border-slate-700 bg-slate-900 pl-4 pr-10 py-3.5 text-base font-mono placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-colors"
+                className="w-full rounded-md border border-surface-border bg-surface-card text-text-primary pl-4 pr-10 py-3.5 text-base font-mono placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary-300 focus:ring-offset-2 focus:border-primary-500 transition-colors duration-150"
                 spellCheck={false}
                 autoComplete="off"
               />
@@ -368,7 +368,7 @@ function AnalysisPage() {
                   type="button"
                   onClick={handleClearSmiles}
                   title="Clear"
-                  className="absolute right-3 top-1/2 -translate-y-1/2 flex h-5 w-5 items-center justify-center rounded-full text-slate-500 hover:text-slate-300 hover:bg-slate-800 transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 flex h-5 w-5 items-center justify-center rounded-full text-text-muted hover:text-primary-600 hover:bg-primary-50 transition-colors duration-150"
                 >
                   <svg
                     viewBox="0 0 24 24"
@@ -391,7 +391,7 @@ function AnalysisPage() {
                 type="button"
                 onClick={handleSubmit}
                 disabled={loading || resolving || !smiles.trim()}
-                className="shrink-0 inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-8 py-3 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                className="shrink-0 inline-flex items-center gap-2 rounded-md bg-primary-500 px-8 py-3 text-sm font-semibold text-white hover:bg-primary-600 active:bg-primary-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors duration-150"
               >
                 <FlaskIcon />
                 {resolving ? "Looking up…" : loading ? "Analyzing…" : "Visualize"}
@@ -400,21 +400,21 @@ function AnalysisPage() {
           </div>
 
           {resolving && (
-            <p className="text-sm text-slate-400">
+            <p className="text-sm text-text-secondary">
               Looking up &ldquo;{resolvingTerm}&rdquo; on PubChem…
             </p>
           )}
 
           {resolvedInfo && (
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-text-muted">
               Resolved: {resolvedInfo.name} →{" "}
-              <span className="font-mono text-emerald-400/70">{resolvedInfo.smiles}</span>{" "}
+              <span className="font-mono text-primary-500">{resolvedInfo.smiles}</span>{" "}
               (
               <a
                 href={`https://pubchem.ncbi.nlm.nih.gov/compound/${resolvedInfo.cid}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-emerald-400 hover:underline"
+                className="text-primary-500 hover:underline"
               >
                 PubChem CID: {resolvedInfo.cid}
               </a>
@@ -423,19 +423,19 @@ function AnalysisPage() {
           )}
 
           <div className="flex flex-wrap gap-2">
-            <span className="text-xs text-slate-500 self-center mr-1">Try:</span>
+            <span className="text-xs text-text-muted self-center mr-1">Try:</span>
             {EXAMPLE_COMPOUNDS.map((name) => (
               <button
                 key={name}
                 type="button"
                 onClick={() => handleSelectExample(name)}
-                className="rounded-full border border-slate-700 px-3 py-1 text-xs text-slate-400 hover:border-emerald-600 hover:text-emerald-400 transition-colors"
+                className="rounded-full border border-surface-border px-3 py-1 text-xs text-text-secondary hover:border-primary-300 hover:bg-primary-50 hover:text-primary-500 transition-colors duration-150"
               >
                 {name}
               </button>
             ))}
           </div>
-          <p className="text-xs text-slate-600">
+          <p className="text-xs text-text-muted">
             Accepts compound names, drug names, or SMILES notation
           </p>
         </div>
@@ -443,17 +443,17 @@ function AnalysisPage() {
         {/* Model selector (predict mode only) — clicking a model runs the prediction */}
         {mode === "predict" && (
           <div className="space-y-2">
-            <h2 className="flex items-center gap-1.5 text-xs uppercase tracking-wider text-slate-400 font-medium">
+            <h2 className="flex items-center gap-1.5 text-[11px] uppercase tracking-wider text-primary-500 font-medium">
               <ActivityIcon />
               Choose a model
             </h2>
             {modelsError && (
-              <div className="rounded-lg border border-red-800/60 bg-red-950/40 px-4 py-3 text-sm text-red-300">
+              <div className="rounded-lg border border-danger-border bg-danger-bg px-4 py-3 text-sm text-danger-text">
                 {modelsError}
               </div>
             )}
             {!modelsError && models.length === 0 && (
-              <p className="text-sm text-slate-500">Loading models…</p>
+              <p className="text-sm text-text-muted">Loading models…</p>
             )}
             {models.length > 0 && (
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
@@ -475,8 +475,8 @@ function AnalysisPage() {
                       }}
                       className={`rounded-lg border py-2.5 px-3 transition-all duration-150 ${
                         isSelected
-                          ? "border-emerald-500/50 bg-emerald-500/5 ring-1 ring-emerald-500/20"
-                          : "border-slate-800 bg-slate-900/40 hover:border-slate-700 hover:bg-slate-800/50"
+                          ? "border-primary-300 bg-primary-50 ring-1 ring-primary-200"
+                          : "border-surface-border bg-surface-card hover:border-primary-200 hover:bg-primary-50/50"
                       } ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
                     >
                       <div className="flex items-center justify-between gap-2">
@@ -484,15 +484,15 @@ function AnalysisPage() {
                           <span
                             className={`h-2.5 w-2.5 rounded-full border shrink-0 ${
                               isSelected
-                                ? "border-emerald-500 bg-emerald-500"
-                                : "border-slate-600"
+                                ? "border-primary-500 bg-primary-500"
+                                : "border-surface-border"
                             }`}
                           />
-                          <span className="text-xs font-medium text-slate-200 truncate">
+                          <span className="text-xs font-medium text-text-primary truncate">
                             {loading && isSelected ? "Predicting…" : model.name}
                           </span>
                         </div>
-                        <span className="text-[10px] text-slate-500 font-mono shrink-0">
+                        <span className="text-[10px] text-text-muted font-mono shrink-0">
                           {model.roc_auc.toFixed(3)}
                         </span>
                       </div>
@@ -505,26 +505,26 @@ function AnalysisPage() {
         )}
 
         {error && (
-          <div className="rounded-lg border border-red-800/60 bg-red-950/40 px-5 py-4 text-sm text-red-300">
+          <div className="rounded-lg border border-danger-border bg-danger-bg px-5 py-4 text-sm text-danger-text">
             {error}
           </div>
         )}
 
-        {hasResults && <div className="border-t border-slate-800/50" />}
+        {hasResults && <div className="border-t border-surface-border" />}
 
         {loading && mode === "visualize" && (
-          <div className="animate-fade-in rounded-xl border border-slate-800 bg-slate-900/40 min-h-[300px] flex items-center justify-center">
-            <p className="text-sm text-slate-500">Analyzing…</p>
+          <div className="animate-fade-in rounded-lg border border-surface-border bg-primary-50/40 min-h-[300px] flex items-center justify-center">
+            <p className="text-sm text-text-secondary">Analyzing…</p>
           </div>
         )}
 
         {loading && mode === "predict" && (
           <div className="animate-fade-in grid gap-6 lg:grid-cols-[1fr_1fr]">
-            <div className="rounded-xl border border-slate-800 bg-slate-900/40 min-h-[300px] flex items-center justify-center">
-              <p className="text-sm text-slate-500">Rendering molecule…</p>
+            <div className="rounded-lg border border-surface-border bg-primary-50/40 min-h-[300px] flex items-center justify-center">
+              <p className="text-sm text-text-secondary">Rendering molecule…</p>
             </div>
-            <div className="rounded-xl border border-slate-800 bg-slate-900/40 min-h-[300px] flex items-center justify-center">
-              <p className="text-sm text-slate-500">Running prediction…</p>
+            <div className="rounded-lg border border-surface-border bg-primary-50/40 min-h-[300px] flex items-center justify-center">
+              <p className="text-sm text-text-secondary">Running prediction…</p>
             </div>
           </div>
         )}
@@ -542,13 +542,13 @@ function AnalysisPage() {
               <div className="space-y-3">
                 {predictMoleculeData ? (
                   <>
-                    <div className="rounded-xl bg-white p-4 flex items-center justify-center max-h-[280px] overflow-hidden">
+                    <div className="rounded-lg bg-surface-card border border-surface-border p-4 flex items-center justify-center max-h-[280px] overflow-hidden">
                       <div
                         className="w-full h-full flex items-center justify-center [&>svg]:max-w-full [&>svg]:max-h-[240px] [&>svg]:h-auto [&>svg]:object-contain"
                         dangerouslySetInnerHTML={{ __html: predictMoleculeData.svg }}
                       />
                     </div>
-                    <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4 grid grid-cols-2 gap-x-4">
+                    <div className="rounded-lg border border-surface-border bg-surface-card p-4 grid grid-cols-2 gap-x-4">
                       <PropRow
                         label="Formula"
                         value={predictMoleculeData.physicochemical.formula}
@@ -576,8 +576,8 @@ function AnalysisPage() {
                     </div>
                   </>
                 ) : (
-                  <div className="rounded-xl border border-slate-800 bg-slate-900/40 p-6 max-h-[280px] flex items-center justify-center">
-                    <p className="text-sm text-slate-500 text-center">
+                  <div className="rounded-lg border border-surface-border bg-surface-card p-6 max-h-[280px] flex items-center justify-center">
+                    <p className="text-sm text-text-muted text-center">
                       Molecule visualization unavailable.
                     </p>
                   </div>
@@ -585,60 +585,60 @@ function AnalysisPage() {
               </div>
 
               {/* Right: prediction results */}
-              <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-5 space-y-3">
+              <div className="rounded-lg border border-surface-border bg-surface-card p-5 space-y-3">
                 <div>
                   <div className="flex items-baseline gap-3">
                     <p
                       className={`text-2xl font-bold ${
                         predictionResult.prediction === "Active"
-                          ? "text-emerald-400"
-                          : "text-red-400"
+                          ? "text-success-text"
+                          : "text-danger-text"
                       }`}
                     >
                       {predictionResult.prediction}
                     </p>
-                    <p className="text-3xl font-bold text-slate-100">
+                    <p className="text-3xl font-bold text-text-primary">
                       {(predictionResult.probability * 100).toFixed(1)}%
                     </p>
-                    <p className="text-xs text-slate-500">probability</p>
+                    <p className="text-xs text-text-muted">probability</p>
                   </div>
-                  <p className="mt-1.5 text-sm text-slate-400">
+                  <p className="mt-1.5 text-sm text-text-secondary">
                     {predictionResult.prediction === "Active"
                       ? "This molecule is predicted to inhibit cancer cell growth — a candidate anti-cancer compound."
                       : "This molecule is predicted to show no significant anti-cancer activity in this screen."}
                   </p>
                 </div>
 
-                <div className="relative h-2 rounded-full bg-slate-800 w-full">
+                <div className="relative h-2 rounded-full bg-primary-50 w-full">
                   <div
-                    className="absolute inset-y-0 left-0 rounded-full bg-emerald-500"
+                    className="absolute inset-y-0 left-0 rounded-full bg-primary-500"
                     style={{ width: `${predictionResult.probability * 100}%` }}
                   />
                   <div
-                    className="absolute inset-y-0 w-0.5 bg-slate-300"
+                    className="absolute inset-y-0 w-0.5 bg-primary-700"
                     style={{ left: `${predictionResult.threshold * 100}%` }}
                     title={`Threshold: ${predictionResult.threshold}`}
                   />
                 </div>
 
                 <div className="grid grid-cols-3 gap-2">
-                  <div className="rounded-lg border border-slate-800 p-2 text-center">
-                    <p className="text-[10px] text-slate-500 mb-0.5">Model</p>
-                    <p className="text-xs text-slate-200 truncate">{predictionResult.model_name}</p>
+                  <div className="rounded-lg border border-surface-border p-2 text-center">
+                    <p className="text-[10px] text-text-muted mb-0.5">Model</p>
+                    <p className="text-xs text-text-primary truncate">{predictionResult.model_name}</p>
                   </div>
-                  <div className="rounded-lg border border-slate-800 p-2 text-center">
-                    <p className="text-[10px] text-slate-500 mb-0.5">Threshold</p>
-                    <p className="text-xs text-slate-200">
+                  <div className="rounded-lg border border-surface-border p-2 text-center">
+                    <p className="text-[10px] text-text-muted mb-0.5">Threshold</p>
+                    <p className="text-xs text-text-primary">
                       {predictionResult.threshold.toFixed(2)}
                     </p>
                   </div>
-                  <div className="rounded-lg border border-slate-800 p-2 text-center">
-                    <p className="text-[10px] text-slate-500 mb-0.5">Confidence</p>
+                  <div className="rounded-lg border border-surface-border p-2 text-center">
+                    <p className="text-[10px] text-text-muted mb-0.5">Confidence</p>
                     <span
                       className={`inline-block text-xs font-medium px-2 py-0.5 rounded-full border ${
                         confidence === "High confidence"
-                          ? "bg-emerald-900/50 text-emerald-400 border-emerald-700/50"
-                          : "bg-amber-900/50 text-amber-400 border-amber-700/50"
+                          ? "bg-success-bg text-success-text border-success-border"
+                          : "bg-warning-bg text-warning-text border-warning-border"
                       }`}
                     >
                       {confidence}
@@ -649,9 +649,9 @@ function AnalysisPage() {
             </div>
 
             {/* Pipeline info */}
-            <div className="rounded-xl border border-slate-800 bg-slate-900/40 p-4">
-              <h2 className="text-sm font-medium text-slate-400 mb-2">Pipeline</h2>
-              <p className="text-xs font-mono text-slate-500 leading-relaxed">
+            <div className="rounded-lg border border-surface-border bg-surface-card p-4">
+              <h2 className="text-sm font-medium text-text-secondary mb-2">Pipeline</h2>
+              <p className="text-xs font-mono text-text-muted leading-relaxed">
                 SMILES → Graph → WL kernel (3329-dim) → FDDL sparse coding (32-dim) →
                 MaxAbsScaler → {predictionResult.model_name}
               </p>

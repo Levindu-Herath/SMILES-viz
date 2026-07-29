@@ -15,15 +15,15 @@ export function Navbar() {
   const { user, signOut } = useAuth();
 
   return (
-    <header className="border-b border-slate-800 bg-slate-950/80 backdrop-blur-sm sticky top-0 z-50">
+    <header className="bg-primary-500 sticky top-0 z-50">
       <div className="mx-auto max-w-6xl px-6 flex items-center justify-between h-14">
         {/* Logo + Nav */}
         <div className="flex items-center gap-8">
           <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="h-7 w-7 rounded-md bg-emerald-500/20 flex items-center justify-center text-emerald-400 text-sm font-bold group-hover:bg-emerald-500/30 transition-colors">
+            <div className="h-7 w-7 rounded-md bg-white/15 flex items-center justify-center text-white text-sm font-bold group-hover:bg-white/25 transition-colors duration-150">
               ⌬
             </div>
-            <span className="text-sm font-semibold tracking-tight text-slate-100">
+            <span className="text-sm font-bold tracking-tight text-white">
               SMILES Viz
             </span>
           </Link>
@@ -36,10 +36,10 @@ export function Navbar() {
                   <Link
                     key={href}
                     href={href}
-                    className={`px-3 py-1.5 rounded-md text-sm transition-colors ${
+                    className={`px-3 py-1.5 rounded-full text-sm transition-colors duration-150 ${
                       isActive
-                        ? "text-emerald-400 bg-emerald-500/10 font-medium"
-                        : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
+                        ? "text-white bg-white/20 font-medium"
+                        : "text-white/65 hover:text-white hover:bg-white/10"
                     }`}
                   >
                     {label}
@@ -53,12 +53,12 @@ export function Navbar() {
         {/* User controls */}
         {user && (
           <div className="flex items-center gap-4">
-            <span className="text-xs text-slate-500 hidden sm:inline">
+            <span className="text-xs text-white/70 hidden sm:inline">
               {user.email}
             </span>
             <button
               onClick={signOut}
-              className="rounded-md border border-slate-700 px-3 py-1.5 text-xs text-slate-400 hover:border-slate-600 hover:text-slate-300 transition-colors"
+              className="rounded-md border border-white/30 px-3 py-1.5 text-xs text-white/80 hover:border-white/60 hover:text-white transition-colors duration-150"
             >
               Sign out
             </button>

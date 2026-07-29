@@ -49,37 +49,37 @@ export default function RegisterPage() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 flex items-center justify-center px-4">
+    <main className="min-h-screen bg-surface-bg flex items-center justify-center px-4">
       <div className="w-full max-w-sm space-y-8">
         {/* Heading */}
         <div className="text-center">
-          <h1 className="text-2xl font-semibold text-slate-100 tracking-tight">
+          <h1 className="text-2xl font-semibold text-text-primary tracking-tight">
             Create your account
           </h1>
-          <p className="mt-2 text-sm text-slate-400">
+          <p className="mt-2 text-sm text-text-secondary">
             Get started with SMILES Viz
           </p>
         </div>
 
-        <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-6">
+        <div className="rounded-lg border border-surface-border bg-surface-card p-6">
           {success ? (
             <div className="text-center space-y-4">
-              <div className="inline-flex h-12 w-12 rounded-full bg-emerald-900/50 items-center justify-center text-emerald-400 text-xl">
+              <div className="inline-flex h-12 w-12 rounded-full bg-success-bg items-center justify-center text-success-text text-xl">
                 ✓
               </div>
               <div>
-                <h2 className="text-lg font-medium text-slate-100">
+                <h2 className="text-lg font-medium text-text-primary">
                   Check your email
                 </h2>
-                <p className="mt-2 text-sm text-slate-400">
+                <p className="mt-2 text-sm text-text-secondary">
                   We sent a confirmation link to{" "}
-                  <span className="text-slate-200 font-medium">{email}</span>.
+                  <span className="text-text-primary font-medium">{email}</span>.
                   Click it to activate your account.
                 </p>
               </div>
               <Link
                 href="/login"
-                className="inline-block text-sm text-emerald-400 hover:text-emerald-300 font-medium transition-colors"
+                className="inline-block text-sm text-primary-500 hover:text-primary-600 font-medium transition-colors duration-150"
               >
                 Back to sign in
               </Link>
@@ -87,7 +87,7 @@ export default function RegisterPage() {
           ) : (
             <>
               {error && (
-                <div className="mb-4 rounded-lg border border-red-800/60 bg-red-950/40 px-4 py-3 text-sm text-red-300">
+                <div className="mb-4 rounded-lg border border-danger-border bg-danger-bg px-4 py-3 text-sm text-danger-text">
                   {error}
                 </div>
               )}
@@ -96,7 +96,7 @@ export default function RegisterPage() {
                 <div>
                   <label
                     htmlFor="email"
-                    className="block text-sm font-medium text-slate-400 mb-1.5"
+                    className="block text-sm font-medium text-text-secondary mb-1.5"
                   >
                     Email
                   </label>
@@ -106,7 +106,7 @@ export default function RegisterPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
-                    className="w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-2.5 text-sm text-slate-100 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-colors"
+                    className="w-full rounded-md border border-surface-border bg-surface-card px-4 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary-300 focus:ring-offset-2 focus:border-primary-500 transition-colors duration-150"
                     placeholder="you@example.com"
                   />
                 </div>
@@ -114,7 +114,7 @@ export default function RegisterPage() {
                 <div>
                   <label
                     htmlFor="password"
-                    className="block text-sm font-medium text-slate-400 mb-1.5"
+                    className="block text-sm font-medium text-text-secondary mb-1.5"
                   >
                     Password
                   </label>
@@ -125,7 +125,7 @@ export default function RegisterPage() {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     minLength={6}
-                    className="w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-2.5 text-sm text-slate-100 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-colors"
+                    className="w-full rounded-md border border-surface-border bg-surface-card px-4 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary-300 focus:ring-offset-2 focus:border-primary-500 transition-colors duration-150"
                     placeholder="••••••••"
                   />
                 </div>
@@ -133,7 +133,7 @@ export default function RegisterPage() {
                 <div>
                   <label
                     htmlFor="confirm-password"
-                    className="block text-sm font-medium text-slate-400 mb-1.5"
+                    className="block text-sm font-medium text-text-secondary mb-1.5"
                   >
                     Confirm password
                   </label>
@@ -144,7 +144,7 @@ export default function RegisterPage() {
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     required
                     minLength={6}
-                    className="w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-2.5 text-sm text-slate-100 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-colors"
+                    className="w-full rounded-md border border-surface-border bg-surface-card px-4 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary-300 focus:ring-offset-2 focus:border-primary-500 transition-colors duration-150"
                     placeholder="••••••••"
                   />
                 </div>
@@ -152,7 +152,7 @@ export default function RegisterPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full rounded-lg bg-emerald-600 py-2.5 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  className="w-full rounded-md bg-primary-500 py-2.5 text-sm font-semibold text-white hover:bg-primary-600 active:bg-primary-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors duration-150"
                 >
                   {loading ? "Creating account…" : "Create account"}
                 </button>
@@ -162,11 +162,11 @@ export default function RegisterPage() {
         </div>
 
         {!success && (
-          <p className="text-center text-sm text-slate-400">
+          <p className="text-center text-sm text-text-secondary">
             Already have an account?{" "}
             <Link
               href="/login"
-              className="text-emerald-400 hover:text-emerald-300 font-medium transition-colors"
+              className="text-primary-500 hover:text-primary-600 font-medium transition-colors duration-150"
             >
               Sign in
             </Link>

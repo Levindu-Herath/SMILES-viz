@@ -1,5 +1,47 @@
 @import "tailwindcss";
 
+@theme {
+  /* Clinical Teal — primary scale */
+  --color-primary-50: #e6f5f0;
+  --color-primary-100: #c8e6dc;
+  --color-primary-200: #9ad4c4;
+  --color-primary-300: #5fbfa8;
+  --color-primary-400: #2da88c;
+  --color-primary-500: #0d7c66;
+  --color-primary-600: #0a6553;
+  --color-primary-700: #074d3f;
+  --color-primary-800: #1a3a33;
+  --color-primary-900: #0f2620;
+
+  /* Surfaces */
+  --color-surface-bg: #f7fafa;
+  --color-surface-card: #ffffff;
+  --color-surface-border: #e0efed;
+  --color-surface-hover: #d4e8e3;
+
+  /* Text */
+  --color-text-primary: #1a3a33;
+  --color-text-secondary: #5a7a73;
+  --color-text-muted: #8ba39c;
+
+  /* Semantic states */
+  --color-success-bg: #d4edda;
+  --color-success-text: #155724;
+  --color-success-border: #b8dcc4;
+
+  --color-danger-bg: #f8d7da;
+  --color-danger-text: #721c24;
+  --color-danger-border: #f0b4ba;
+
+  --color-warning-bg: #fff3cd;
+  --color-warning-text: #856404;
+  --color-warning-border: #ffe69c;
+
+  --color-info-bg: #d1ecf1;
+  --color-info-text: #0c5460;
+  --color-info-border: #a8d8e2;
+}
+
 @keyframes fade-in {
   from {
     opacity: 0;
@@ -26,4 +68,19 @@
 
 .animate-scale-in {
   animation: scale-in 0.15s ease-out;
+}
+
+@keyframes tooltip-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-tooltip-in {
+  animation: tooltip-in 0.15s ease-out;
 }

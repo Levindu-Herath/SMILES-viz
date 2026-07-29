@@ -16,7 +16,7 @@ export function MoleculeResults({ data }: MoleculeResultsProps) {
       {/* Row 1: Structure + Radar + Canonical SMILES */}
       <div className="grid gap-6 lg:grid-cols-[1fr_300px]">
         {/* Molecule SVG */}
-        <div className="rounded-xl border border-slate-800 bg-white p-6 flex items-center justify-center min-h-[350px]">
+        <div className="rounded-lg border border-surface-border bg-surface-card p-6 flex items-center justify-center min-h-[350px]">
           <div dangerouslySetInnerHTML={{ __html: data.svg }} />
         </div>
 
@@ -27,9 +27,9 @@ export function MoleculeResults({ data }: MoleculeResultsProps) {
               <RadarChart data={data.radar} />
             </div>
           </SectionCard>
-          <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
-            <span className="text-xs text-slate-500">Canonical SMILES</span>
-            <p className="text-xs font-mono text-slate-200 mt-1 break-all">
+          <div className="rounded-lg border border-surface-border bg-surface-card p-4">
+            <span className="text-xs text-text-muted">Canonical SMILES</span>
+            <p className="text-xs font-mono text-text-primary font-medium mt-1 break-all">
               {data.smiles}
             </p>
           </div>
@@ -73,9 +73,9 @@ export function MoleculeResults({ data }: MoleculeResultsProps) {
           <RuleBadge name="Veber" rule={druglikeness.veber} />
           <RuleBadge name="Egan" rule={druglikeness.egan} />
           <RuleBadge name="Muegge" rule={druglikeness.muegge} />
-          <div className="flex items-center justify-between pt-3 mt-1 border-t border-slate-700">
-            <span className="text-xs text-slate-300">Bioavailability score</span>
-            <span className="text-sm font-semibold text-emerald-400">
+          <div className="flex items-center justify-between pt-3 mt-1 border-t border-surface-border">
+            <span className="text-xs text-text-secondary">Bioavailability score</span>
+            <span className="text-sm font-semibold text-primary-500">
               {druglikeness.bioavailability_score}
             </span>
           </div>
@@ -83,13 +83,13 @@ export function MoleculeResults({ data }: MoleculeResultsProps) {
 
         {/* Medicinal Chemistry */}
         <SectionCard title="Medicinal chemistry">
-          <div className="flex items-center justify-between py-2 border-b border-slate-800/50">
-            <span className="text-xs text-slate-300">PAINS alerts</span>
+          <div className="flex items-center justify-between py-2 border-b border-surface-border">
+            <span className="text-xs text-text-secondary">PAINS alerts</span>
             <span
               className={`text-xs font-medium px-2.5 py-0.5 rounded-full border ${
                 medchem.pains_alerts === 0
-                  ? "bg-emerald-900/50 text-emerald-400 border-emerald-700/50"
-                  : "bg-red-900/50 text-red-400 border-red-700/50"
+                  ? "bg-success-bg text-success-text border-success-border"
+                  : "bg-danger-bg text-danger-text border-danger-border"
               }`}
             >
               {medchem.pains_alerts === 0
@@ -98,26 +98,26 @@ export function MoleculeResults({ data }: MoleculeResultsProps) {
             </span>
           </div>
           {medchem.pains_descriptions.length > 0 && (
-            <div className="py-1.5 text-xs text-red-300">
+            <div className="py-1.5 text-xs text-danger-text">
               {medchem.pains_descriptions.join(", ")}
             </div>
           )}
           <RuleBadge name="Leadlikeness" rule={medchem.leadlikeness} />
-          <div className="flex items-center justify-between py-2 border-b border-slate-800/50">
-            <span className="text-xs text-slate-300">Synthetic accessibility</span>
-            <span className="text-sm font-mono text-slate-200">
+          <div className="flex items-center justify-between py-2 border-b border-surface-border">
+            <span className="text-xs text-text-secondary">Synthetic accessibility</span>
+            <span className="text-sm font-mono text-text-primary font-medium">
               {medchem.sa_score !== null ? medchem.sa_score : "N/A"}
             </span>
           </div>
           {medchem.sa_score !== null && (
             <div className="mt-2">
-              <div className="flex justify-between text-[10px] text-slate-500 mb-1">
+              <div className="flex justify-between text-[10px] text-text-muted mb-1">
                 <span>Easy (1)</span>
                 <span>Hard (10)</span>
               </div>
-              <div className="h-2 rounded-full bg-slate-800 overflow-hidden">
+              <div className="h-2 rounded-full bg-surface-border overflow-hidden">
                 <div
-                  className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-red-500"
+                  className="h-full rounded-full bg-gradient-to-r from-primary-500 to-danger-border"
                   style={{ width: `${(medchem.sa_score / 10) * 100}%` }}
                 />
               </div>

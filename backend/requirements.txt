@@ -1,19 +1,13 @@
 fastapi>=0.115.0
 uvicorn>=0.30.0
-rdkit
 Pillow>=10.0.0
 pydantic-settings>=2.0.0
 python-jose[cryptography]>=3.3.0
 supabase>=2.0.0
 python-multipart>=0.0.9
-
-# ML prediction pipeline (backend/sparsegraphs: WL encoder + FDDL sparse coding + classifiers)
-# scikit-learn==1.9.0 matches the version the artifact bundle was trained with (requires
-# Python >=3.11). On Python 3.10, pip resolves this down to 1.7.2 instead; a small
-# compatibility patch in ml_pipeline/inference.py covers the one resulting pickle gap.
 gensim==4.4.0
 networkx==3.6.1
 scikit-learn==1.9.0
 scipy==1.18.0
 joblib==1.5.3
-torch>=2.0
+numpy

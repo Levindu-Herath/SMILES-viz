@@ -2,6 +2,7 @@ __pycache__/
 *.pyc
 .venv/
 .env
-sparsegraphs/artifacts/
-sparsegraphs/results/
 *.bak
+sparsegraphs/results/
+sparsegraphs/artifacts/*/code_cache/
+sparsegraphs/artifacts/*/eval/

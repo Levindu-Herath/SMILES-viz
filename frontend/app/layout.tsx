@@ -18,7 +18,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${inter.className} bg-slate-950 text-slate-100`}>
+      <body className={`${inter.className} bg-surface-bg text-text-primary`}>
         <AuthProvider>
           <Navbar />
           {children}

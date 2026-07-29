@@ -42,7 +42,7 @@ function FolderIcon() {
 
 function SpinnerIcon() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4 animate-spin">
+    <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4 animate-spin text-primary-500">
       <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" strokeOpacity="0.25" />
       <path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
     </svg>
@@ -281,52 +281,52 @@ export default function TrainPage() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-100">
+    <main className="min-h-screen bg-surface-bg text-text-primary">
       <div className="mx-auto max-w-3xl px-6 py-8 space-y-8">
         <div className="flex items-center justify-between gap-4">
           <div>
-            <h1 className="text-xl font-semibold tracking-tight">Train</h1>
-            <p className="mt-1 text-sm text-slate-400">
+            <h1 className="text-2xl font-semibold tracking-tight text-text-primary">Train</h1>
+            <p className="mt-1 text-sm text-text-secondary">
               Train a molecular activity classifier using your local trainer server.
             </p>
           </div>
           {pageState !== "checking" && pageState !== "disconnected" && (
             <div className="flex items-center gap-2 shrink-0">
-              <span className="h-2 w-2 rounded-full bg-emerald-400" />
-              <span className="text-xs text-slate-400">Trainer Connected</span>
+              <span className="h-2 w-2 rounded-full bg-primary-400" />
+              <span className="text-xs text-text-secondary">Trainer Connected</span>
             </div>
           )}
         </div>
 
         {pageState === "checking" && (
-          <div className="rounded-xl border border-slate-800 bg-slate-900/40 p-10 text-center">
-            <p className="text-sm text-slate-500">Checking for local trainer…</p>
+          <div className="rounded-lg border border-surface-border bg-surface-card p-10 text-center">
+            <p className="text-sm text-text-muted">Checking for local trainer…</p>
           </div>
         )}
 
         {pageState === "disconnected" && (
-          <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-8 space-y-5">
+          <div className="rounded-lg border border-info-border bg-info-bg p-8 space-y-5">
             <div className="flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-red-500" />
-              <h2 className="text-base font-semibold text-slate-100">Local Trainer Not Detected</h2>
+              <span className="h-2 w-2 rounded-full bg-info-text" />
+              <h2 className="text-base font-semibold text-info-text">Local Trainer Not Detected</h2>
             </div>
-            <p className="text-sm text-slate-400">
+            <p className="text-sm text-info-text">
               The Train page talks to a local training server running on your machine at{" "}
-              <code className="rounded bg-slate-800 px-1.5 py-0.5 text-xs text-slate-300">
+              <code className="rounded bg-white px-1.5 py-0.5 text-xs text-info-text">
                 http://localhost:5000
               </code>
               . Install and start it, then retry the connection.
             </p>
             <div className="space-y-2">
-              <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Setup</p>
-              <pre className="rounded-lg border border-slate-800 bg-slate-950 px-4 py-3 text-xs text-slate-300 overflow-x-auto">
+              <p className="text-xs font-medium text-info-text uppercase tracking-wide">Setup</p>
+              <pre className="rounded-lg border border-info-border bg-white px-4 py-3 text-xs text-text-primary overflow-x-auto">
                 pip install smiles-viz-trainer{"\n"}smiles-train
               </pre>
             </div>
             <button
               type="button"
               onClick={checkConnection}
-              className="rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-500 transition-colors"
+              className="rounded-md bg-primary-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary-600 active:bg-primary-700 transition-colors duration-150"
             >
               Retry Connection
             </button>
@@ -335,9 +335,9 @@ export default function TrainPage() {
 
         {pageState === "form" && (
           <div className="space-y-6">
-            <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-6 space-y-4">
+            <div className="rounded-lg border border-surface-border bg-surface-card p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-400 mb-1.5">
+                <label className="block text-sm font-medium text-text-secondary mb-1.5">
                   Dataset file path
                 </label>
                 <div className="flex gap-2">
@@ -351,14 +351,14 @@ export default function TrainPage() {
                         setValidationError("");
                       }}
                       placeholder="C:\path\to\dataset.csv"
-                      className="w-full rounded-lg border border-slate-700 bg-slate-900 pl-4 pr-9 py-2.5 text-sm text-slate-100 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-colors font-mono"
+                      className="w-full rounded-md border border-surface-border bg-surface-card pl-4 pr-9 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary-300 focus:ring-offset-2 focus:border-primary-500 transition-colors duration-150 font-mono"
                     />
                     {filePath && (
                       <button
                         type="button"
                         onClick={clearFilePath}
                         aria-label="Clear file path"
-                        className="absolute right-2 top-1/2 -translate-y-1/2 h-5 w-5 flex items-center justify-center rounded-full text-slate-500 hover:text-slate-200 hover:bg-slate-800 transition-colors"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 h-5 w-5 flex items-center justify-center rounded-full text-text-muted hover:text-primary-600 hover:bg-primary-50 transition-colors duration-150"
                       >
                         ×
                       </button>
@@ -377,7 +377,7 @@ export default function TrainPage() {
                     disabled={uploading}
                     aria-label="Browse for a dataset file"
                     title="Browse for a dataset file"
-                    className="shrink-0 flex items-center justify-center rounded-lg border border-slate-700 px-3.5 py-2.5 text-slate-200 hover:border-emerald-600 hover:text-emerald-400 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    className="shrink-0 flex items-center justify-center rounded-md border border-surface-border px-3.5 py-2.5 text-text-secondary hover:border-primary-300 hover:bg-primary-50 hover:text-primary-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors duration-150"
                   >
                     {uploading ? <SpinnerIcon /> : <FileIcon />}
                   </button>
@@ -385,7 +385,7 @@ export default function TrainPage() {
                     type="button"
                     onClick={handleValidate}
                     disabled={!filePath.trim() || validating}
-                    className="rounded-lg border border-slate-700 px-4 py-2.5 text-sm text-slate-200 hover:border-emerald-600 hover:text-emerald-400 disabled:opacity-40 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
+                    className="rounded-md border border-surface-border px-4 py-2.5 text-sm text-text-secondary hover:border-primary-300 hover:bg-primary-50 hover:text-primary-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors duration-150 whitespace-nowrap"
                   >
                     {validating ? "Validating…" : "Validate"}
                   </button>
@@ -393,13 +393,13 @@ export default function TrainPage() {
               </div>
 
               {uploadError && (
-                <div className="rounded-lg border border-red-800/60 bg-red-950/40 px-4 py-3 text-sm text-red-300">
+                <div className="rounded-lg border border-danger-border bg-danger-bg px-4 py-3 text-sm text-danger-text">
                   {uploadError}
                 </div>
               )}
 
               {validationError && (
-                <div className="rounded-lg border border-red-800/60 bg-red-950/40 px-4 py-3 text-sm text-red-300">
+                <div className="rounded-lg border border-danger-border bg-danger-bg px-4 py-3 text-sm text-danger-text">
                   {validationError}
                 </div>
               )}
@@ -407,7 +407,7 @@ export default function TrainPage() {
               {validation && (
                 <div className="space-y-3">
                   {validation.errors.length > 0 && (
-                    <div className="rounded-lg border border-red-800/60 bg-red-950/40 px-4 py-3 text-sm text-red-300 space-y-1">
+                    <div className="rounded-lg border border-danger-border bg-danger-bg px-4 py-3 text-sm text-danger-text space-y-1">
                       {validation.errors.map((e, i) => (
                         <p key={i}>{e}</p>
                       ))}
@@ -415,34 +415,34 @@ export default function TrainPage() {
                   )}
 
                   {validation.warnings.length > 0 && (
-                    <div className="rounded-lg border border-amber-800/60 bg-amber-950/30 px-4 py-3 text-sm text-amber-300 space-y-1">
+                    <div className="rounded-lg border border-warning-border bg-warning-bg px-4 py-3 text-sm text-warning-text space-y-1">
                       {validation.warnings.map((w, i) => (
                         <p key={i}>{w}</p>
                       ))}
                     </div>
                   )}
 
-                  <div className="rounded-lg border border-slate-800 bg-slate-950/60 p-4 grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
+                  <div className="rounded-lg border border-surface-border bg-surface-bg p-4 grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
                     <div>
-                      <p className="text-xs text-slate-500">Total rows</p>
-                      <p className="text-slate-200 font-medium">{validation.total_rows}</p>
+                      <p className="text-xs text-text-muted">Total rows</p>
+                      <p className="text-text-primary font-medium">{validation.total_rows}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-slate-500">Valid SMILES</p>
-                      <p className="text-slate-200 font-medium">{validation.valid_smiles}</p>
+                      <p className="text-xs text-text-muted">Valid SMILES</p>
+                      <p className="text-text-primary font-medium">{validation.valid_smiles}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-slate-500">Invalid SMILES</p>
-                      <p className="text-slate-200 font-medium">{validation.invalid_smiles}</p>
+                      <p className="text-xs text-text-muted">Invalid SMILES</p>
+                      <p className="text-text-primary font-medium">{validation.invalid_smiles}</p>
                     </div>
                     {Object.keys(validation.target_value_counts).length > 0 && (
                       <div className="col-span-2 sm:col-span-3">
-                        <p className="text-xs text-slate-500 mb-1">Target distribution</p>
+                        <p className="text-xs text-text-muted mb-1">Target distribution</p>
                         <div className="flex flex-wrap gap-2">
                           {Object.entries(validation.target_value_counts).map(([label, count]) => (
                             <span
                               key={label}
-                              className="rounded-full border border-slate-700 px-2.5 py-1 text-xs text-slate-300"
+                              className="rounded-full border border-surface-border px-2.5 py-1 text-xs text-text-secondary"
                             >
                               {label}: {count}
                             </span>
@@ -453,11 +453,11 @@ export default function TrainPage() {
                   </div>
 
                   {validation.invalid_rows.length > 0 && (
-                    <div className="rounded-lg border border-slate-800 bg-slate-950/60">
+                    <div className="rounded-lg border border-surface-border bg-surface-bg">
                       <button
                         type="button"
                         onClick={() => setShowInvalidRows((v) => !v)}
-                        className="w-full flex items-center justify-between px-4 py-2.5 text-xs text-slate-400 hover:text-slate-200 transition-colors"
+                        className="w-full flex items-center justify-between px-4 py-2.5 text-xs text-text-secondary hover:text-text-primary transition-colors duration-150"
                       >
                         <span>
                           {showInvalidRows ? "Hide" : "Show"} {validation.invalid_rows.length} invalid row(s)
@@ -465,10 +465,10 @@ export default function TrainPage() {
                         <span>{showInvalidRows ? "▲" : "▼"}</span>
                       </button>
                       {showInvalidRows && (
-                        <div className="border-t border-slate-800 px-4 py-3 space-y-1.5 max-h-48 overflow-y-auto">
+                        <div className="border-t border-surface-border px-4 py-3 space-y-1.5 max-h-48 overflow-y-auto">
                           {validation.invalid_rows.map((row) => (
-                            <p key={row.row} className="text-xs text-slate-500 font-mono">
-                              Row {row.row}: <span className="text-slate-400">{row.smiles}</span> —{" "}
+                            <p key={row.row} className="text-xs text-text-muted font-mono">
+                              Row {row.row}: <span className="text-text-secondary">{row.smiles}</span> —{" "}
                               {row.error}
                             </p>
                           ))}
@@ -481,16 +481,16 @@ export default function TrainPage() {
             </div>
 
             {validation?.is_valid && (
-              <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-6 space-y-5">
+              <div className="rounded-lg border border-surface-border bg-surface-card p-6 space-y-5">
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-slate-400 mb-1.5">
+                    <label className="block text-sm font-medium text-text-secondary mb-1.5">
                       SMILES column
                     </label>
                     <select
                       value={smilesColumn}
                       onChange={(e) => setSmilesColumn(e.target.value)}
-                      className="w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-colors"
+                      className="w-full rounded-md border border-surface-border bg-surface-card px-4 py-2.5 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary-300 focus:ring-offset-2 focus:border-primary-500 transition-colors duration-150"
                     >
                       {validation.columns.map((col) => (
                         <option key={col} value={col}>
@@ -500,13 +500,13 @@ export default function TrainPage() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-400 mb-1.5">
+                    <label className="block text-sm font-medium text-text-secondary mb-1.5">
                       Target column
                     </label>
                     <select
                       value={targetColumn}
                       onChange={(e) => setTargetColumn(e.target.value)}
-                      className="w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-colors"
+                      className="w-full rounded-md border border-surface-border bg-surface-card px-4 py-2.5 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary-300 focus:ring-offset-2 focus:border-primary-500 transition-colors duration-150"
                     >
                       {validation.columns.map((col) => (
                         <option key={col} value={col}>
@@ -518,7 +518,7 @@ export default function TrainPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-400 mb-1.5">
+                  <label className="block text-sm font-medium text-text-secondary mb-1.5">
                     Classifier
                   </label>
                   <div className="grid grid-cols-2 gap-2">
@@ -527,10 +527,10 @@ export default function TrainPage() {
                         key={c.value}
                         type="button"
                         onClick={() => setClassifier(c.value)}
-                        className={`rounded-lg border px-4 py-2.5 text-sm transition-colors ${
+                        className={`rounded-md border px-4 py-2.5 text-sm transition-colors duration-150 ${
                           classifier === c.value
-                            ? "border-emerald-500 bg-emerald-500/10 text-emerald-400 font-medium"
-                            : "border-slate-700 text-slate-300 hover:border-slate-600"
+                            ? "border-primary-500 bg-primary-50 text-primary-600 font-medium"
+                            : "border-surface-border text-text-secondary hover:border-primary-200"
                         }`}
                       >
                         {c.label}
@@ -540,8 +540,8 @@ export default function TrainPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-400 mb-1.5">
-                    Output directory <span className="text-slate-600">(optional)</span>
+                  <label className="block text-sm font-medium text-text-secondary mb-1.5">
+                    Output directory <span className="text-text-muted">(optional)</span>
                   </label>
                   <div className="flex gap-2">
                     <div className="relative flex-1">
@@ -550,14 +550,14 @@ export default function TrainPage() {
                         value={outputDir}
                         onChange={(e) => setOutputDir(e.target.value)}
                         placeholder="~/smiles-viz-models/"
-                        className="w-full rounded-lg border border-slate-700 bg-slate-900 pl-4 pr-9 py-2.5 text-sm text-slate-100 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-colors font-mono"
+                        className="w-full rounded-md border border-surface-border bg-surface-card pl-4 pr-9 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary-300 focus:ring-offset-2 focus:border-primary-500 transition-colors duration-150 font-mono"
                       />
                       {outputDir && (
                         <button
                           type="button"
                           onClick={clearOutputDir}
                           aria-label="Clear output directory"
-                          className="absolute right-2 top-1/2 -translate-y-1/2 h-5 w-5 flex items-center justify-center rounded-full text-slate-500 hover:text-slate-200 hover:bg-slate-800 transition-colors"
+                          className="absolute right-2 top-1/2 -translate-y-1/2 h-5 w-5 flex items-center justify-center rounded-full text-text-muted hover:text-primary-600 hover:bg-primary-50 transition-colors duration-150"
                         >
                           ×
                         </button>
@@ -568,7 +568,7 @@ export default function TrainPage() {
                       onClick={() => setShowFolderModal(true)}
                       aria-label="Browse for an output directory"
                       title="Browse for an output directory"
-                      className="shrink-0 flex items-center justify-center rounded-lg border border-slate-700 px-3.5 py-2.5 text-slate-200 hover:border-emerald-600 hover:text-emerald-400 transition-colors"
+                      className="shrink-0 flex items-center justify-center rounded-md border border-surface-border px-3.5 py-2.5 text-text-secondary hover:border-primary-300 hover:bg-primary-50 hover:text-primary-500 transition-colors duration-150"
                     >
                       <FolderIcon />
                     </button>
@@ -576,7 +576,7 @@ export default function TrainPage() {
                 </div>
 
                 {startError && (
-                  <div className="rounded-lg border border-red-800/60 bg-red-950/40 px-4 py-3 text-sm text-red-300">
+                  <div className="rounded-lg border border-danger-border bg-danger-bg px-4 py-3 text-sm text-danger-text">
                     {startError}
                   </div>
                 )}
@@ -585,7 +585,7 @@ export default function TrainPage() {
                   type="button"
                   onClick={handleStartTraining}
                   disabled={!validation.is_valid || starting}
-                  className="w-full rounded-lg bg-emerald-600 py-2.5 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  className="w-full rounded-md bg-primary-500 py-2.5 text-sm font-semibold text-white hover:bg-primary-600 active:bg-primary-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors duration-150"
                 >
                   {starting ? "Starting…" : "Start Training"}
                 </button>
@@ -595,26 +595,26 @@ export default function TrainPage() {
         )}
 
         {pageState === "training" && (
-          <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-8 space-y-6">
+          <div className="rounded-lg border border-surface-border bg-surface-card p-8 space-y-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-base font-semibold text-slate-100">Training in progress</h2>
-              <span className="text-sm text-slate-400 font-mono">{formatElapsed(elapsed)}</span>
+              <h2 className="text-base font-semibold text-text-primary">Training in progress</h2>
+              <span className="text-sm text-text-secondary font-mono">{formatElapsed(elapsed)}</span>
             </div>
 
             <div className="space-y-2">
-              <div className="flex items-center justify-between text-xs text-slate-500">
+              <div className="flex items-center justify-between text-xs text-text-muted">
                 <span className="uppercase tracking-wide">{jobStatus?.status ?? "Starting"}</span>
                 <span>{Math.round((jobStatus?.progress ?? 0) * 100)}%</span>
               </div>
-              <div className="h-2.5 w-full rounded-full bg-slate-800 overflow-hidden">
+              <div className="h-2.5 w-full rounded-full bg-primary-50 overflow-hidden">
                 <div
-                  className="h-full rounded-full bg-emerald-500 transition-all duration-500 animate-pulse"
+                  className="h-full rounded-full bg-primary-500 transition-all duration-500 animate-pulse"
                   style={{ width: `${Math.round((jobStatus?.progress ?? 0) * 100)}%` }}
                 />
               </div>
             </div>
 
-            <p className="text-sm text-slate-400">
+            <p className="text-sm text-text-secondary">
               {jobStatus?.message ?? "Waiting for the trainer to report progress…"}
             </p>
           </div>
@@ -622,46 +622,46 @@ export default function TrainPage() {
 
         {pageState === "complete" && result && (
           <div className="space-y-6">
-            <div className="rounded-xl border border-emerald-800/60 bg-emerald-950/20 p-6 space-y-4">
+            <div className="rounded-lg border border-success-border bg-success-bg p-6 space-y-4">
               <div className="flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-emerald-400" />
-                <h2 className="text-base font-semibold text-slate-100">Training complete</h2>
+                <span className="h-2 w-2 rounded-full bg-success-text" />
+                <h2 className="text-base font-semibold text-success-text">Training complete</h2>
               </div>
 
               <dl className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm">
                 <div>
-                  <dt className="text-xs text-slate-500">Classifier</dt>
-                  <dd className="text-slate-200 font-medium">
+                  <dt className="text-xs text-text-secondary">Classifier</dt>
+                  <dd className="text-text-primary font-medium">
                     {CLASSIFIERS.find((c) => c.value === result.classifier)?.label ??
                       result.classifier}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-xs text-slate-500">Total molecules</dt>
-                  <dd className="text-slate-200 font-medium">{result.total_molecules}</dd>
+                  <dt className="text-xs text-text-secondary">Total molecules</dt>
+                  <dd className="text-text-primary font-medium">{result.total_molecules}</dd>
                 </div>
                 <div>
-                  <dt className="text-xs text-slate-500">Valid molecules</dt>
-                  <dd className="text-slate-200 font-medium">{result.valid_molecules}</dd>
+                  <dt className="text-xs text-text-secondary">Valid molecules</dt>
+                  <dd className="text-text-primary font-medium">{result.valid_molecules}</dd>
                 </div>
                 <div>
-                  <dt className="text-xs text-slate-500">Duration</dt>
-                  <dd className="text-slate-200 font-medium">
+                  <dt className="text-xs text-text-secondary">Duration</dt>
+                  <dd className="text-text-primary font-medium">
                     {formatElapsed(result.training_duration_seconds)}
                   </dd>
                 </div>
               </dl>
 
               <div>
-                <p className="text-xs text-slate-500 mb-2">Metrics</p>
+                <p className="text-xs text-text-secondary mb-2">Metrics</p>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   {Object.entries(result.metrics).map(([key, value]) => (
                     <div
                       key={key}
-                      className="rounded-lg border border-slate-800 bg-slate-950/60 px-3 py-2.5 text-center"
+                      className="rounded-lg border border-surface-border bg-surface-card px-3 py-2.5 text-center"
                     >
-                      <p className="text-xs text-slate-500">{formatMetricLabel(key)}</p>
-                      <p className="text-sm font-semibold text-emerald-400">
+                      <p className="text-xs text-text-muted">{formatMetricLabel(key)}</p>
+                      <p className="text-sm font-semibold text-primary-500">
                         {value.toFixed(3)}
                       </p>
                     </div>
@@ -670,8 +670,8 @@ export default function TrainPage() {
               </div>
 
               <div>
-                <p className="text-xs text-slate-500">Model saved to</p>
-                <p className="mt-1 text-xs text-slate-300 font-mono break-all rounded-lg border border-slate-800 bg-slate-950/60 px-3 py-2">
+                <p className="text-xs text-text-secondary">Model saved to</p>
+                <p className="mt-1 text-xs text-text-primary font-mono break-all rounded-lg border border-surface-border bg-surface-card px-3 py-2">
                   {result.output_path}
                 </p>
               </div>
@@ -680,7 +680,7 @@ export default function TrainPage() {
             <button
               type="button"
               onClick={resetToForm}
-              className="w-full rounded-lg border border-slate-700 py-2.5 text-sm text-slate-200 hover:border-slate-600 transition-colors"
+              className="w-full rounded-md border border-surface-border py-2.5 text-sm text-text-secondary hover:border-primary-300 hover:bg-primary-50 hover:text-primary-500 transition-colors duration-150"
             >
               Train Another Model
             </button>
@@ -689,18 +689,18 @@ export default function TrainPage() {
 
         {pageState === "failed" && (
           <div className="space-y-6">
-            <div className="rounded-xl border border-red-800/60 bg-red-950/30 p-6 space-y-3">
+            <div className="rounded-lg border border-danger-border bg-danger-bg p-6 space-y-3">
               <div className="flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-red-500" />
-                <h2 className="text-base font-semibold text-slate-100">Training failed</h2>
+                <span className="h-2 w-2 rounded-full bg-danger-text" />
+                <h2 className="text-base font-semibold text-danger-text">Training failed</h2>
               </div>
-              <p className="text-sm text-red-300">{failureError}</p>
+              <p className="text-sm text-danger-text">{failureError}</p>
             </div>
 
             <button
               type="button"
               onClick={resetToForm}
-              className="w-full rounded-lg bg-emerald-600 py-2.5 text-sm font-semibold text-white hover:bg-emerald-500 transition-colors"
+              className="w-full rounded-md bg-primary-500 py-2.5 text-sm font-semibold text-white hover:bg-primary-600 active:bg-primary-700 transition-colors duration-150"
             >
               Try Again
             </button>

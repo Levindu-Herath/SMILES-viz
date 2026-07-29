@@ -14,7 +14,7 @@ export function SmilesInput({ value, onChange, onSubmit, loading }: SmilesInputP
     <section>
       <label
         htmlFor="smiles-input"
-        className="block text-sm font-medium text-slate-400 mb-2"
+        className="block text-sm font-medium text-text-secondary mb-2"
       >
         Enter a SMILES string
       </label>
@@ -28,7 +28,7 @@ export function SmilesInput({ value, onChange, onSubmit, loading }: SmilesInputP
             if (e.key === "Enter") onSubmit();
           }}
           placeholder="e.g. CC(=O)Oc1ccccc1C(=O)O"
-          className="flex-1 rounded-lg border border-slate-700 bg-slate-900 px-4 py-3 text-base font-mono placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-colors"
+          className="flex-1 rounded-md border border-surface-border bg-surface-card text-text-primary px-4 py-3 text-base font-mono placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary-300 focus:ring-offset-2 focus:border-primary-500 transition-colors duration-150"
           spellCheck={false}
           autoComplete="off"
         />
@@ -36,19 +36,19 @@ export function SmilesInput({ value, onChange, onSubmit, loading }: SmilesInputP
           type="button"
           onClick={onSubmit}
           disabled={loading}
-          className="rounded-lg bg-emerald-600 px-6 py-3 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
+          className="rounded-md bg-primary-500 px-6 py-3 text-sm font-semibold text-white hover:bg-primary-600 active:bg-primary-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors duration-150 whitespace-nowrap"
         >
           {loading ? "Analyzing…" : "Visualize"}
         </button>
       </div>
       <div className="mt-3 flex flex-wrap gap-2">
-        <span className="text-xs text-slate-500 self-center mr-1">Try:</span>
+        <span className="text-xs text-text-muted self-center mr-1">Try:</span>
         {EXAMPLE_MOLECULES.map((m) => (
           <button
             key={m.smiles}
             type="button"
             onClick={() => onChange(m.smiles)}
-            className="rounded-full border border-slate-700 px-3 py-1 text-xs text-slate-400 hover:border-emerald-600 hover:text-emerald-400 transition-colors"
+            className="rounded-full border border-surface-border px-3 py-1 text-xs text-text-secondary hover:border-primary-300 hover:bg-primary-50 hover:text-primary-500 transition-colors duration-150"
           >
             {m.name}
           </button>

@@ -16,8 +16,8 @@ export default function AuthCallbackPage() {
   }, [router]);
 
   return (
-    <main className="min-h-screen bg-slate-950 flex items-center justify-center">
-      <p className="text-slate-400 text-sm">Confirming your account…</p>
+    <main className="min-h-screen bg-surface-bg flex items-center justify-center">
+      <p className="text-text-secondary text-sm">Confirming your account…</p>
     </main>
   );
 }
