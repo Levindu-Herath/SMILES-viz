@@ -24,7 +24,7 @@ export function Navbar() {
               ⌬
             </div>
             <span className="text-sm font-bold tracking-tight text-white">
-              SMILES Viz
+              Molytica
             </span>
           </Link>
 

@@ -57,7 +57,7 @@ export default function RegisterPage() {
             Create your account
           </h1>
           <p className="mt-2 text-sm text-text-secondary">
-            Get started with SMILES Viz
+            Get started with Molytica
           </p>
         </div>
 
