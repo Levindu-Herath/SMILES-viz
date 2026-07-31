@@ -88,6 +88,14 @@ class _NumpySparseCoder:
 
         return Z.T
 
+    @property
+    def _dictionary(self) -> np.ndarray:
+        """(n_atoms, n_features) view of D, matching AKSVD's `_dictionary`
+        orientation -- interpretability code (WLAKSVDInterpreter) indexes the
+        dictionary per-atom (`dictionary[atom_idx]`), but D here is stored
+        (n_features, n_atoms) for the ISTA matmuls in infer()."""
+        return self.D.T
+
 
 class MolecularActivityPredictor:
     """Loads the trained artifact bundle once and serves predictions from it."""
@@ -130,6 +138,25 @@ class MolecularActivityPredictor:
     @property
     def default_model(self) -> str:
         return self._default_model
+
+    @property
+    def encoder(self):
+        return self._encoder
+
+    @property
+    def dict_learner(self):
+        return self._dict_learner
+
+    @property
+    def scaler(self):
+        return self._scaler
+
+    def model_for(self, model_name: Optional[str] = None):
+        return self._models[model_name or self._default_model]
+
+    def graph_for(self, smiles: str):
+        """Build the same networkx graph predict() feeds the encoder."""
+        return self._smiles_to_graph(smiles.strip())
 
     def available_models(self) -> list[str]:
         return list(self._models.keys())

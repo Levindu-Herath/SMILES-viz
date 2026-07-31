@@ -4,9 +4,15 @@ import { useEffect, useState } from "react";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { MoleculeResults } from "@/components/molecule/MoleculeResults";
 import { PropRow } from "@/components/ui/PropRow";
-import { ApiError, getAvailableModels, predictActivity, visualizeMolecule } from "@/lib/api";
+import {
+  ApiError,
+  getAvailableModels,
+  getPredictionHeatmap,
+  predictActivity,
+  visualizeMolecule,
+} from "@/lib/api";
 import type { MoleculeData } from "@/types/molecule";
-import type { ModelInfo, PredictionResult } from "@/types/prediction";
+import type { HeatmapResult, ModelInfo, PredictionResult } from "@/types/prediction";
 
 type Mode = "visualize" | "predict";
 
@@ -145,6 +151,8 @@ function AnalysisPage() {
   const [modelsError, setModelsError] = useState("");
   const [predictionResult, setPredictionResult] = useState<PredictionResult | null>(null);
   const [predictMoleculeData, setPredictMoleculeData] = useState<MoleculeData | null>(null);
+  const [heatmapResult, setHeatmapResult] = useState<HeatmapResult | null>(null);
+  const [heatmapError, setHeatmapError] = useState("");
 
   useEffect(() => {
     getAvailableModels()
@@ -163,6 +171,8 @@ function AnalysisPage() {
     setVisualizeResult(null);
     setPredictionResult(null);
     setPredictMoleculeData(null);
+    setHeatmapResult(null);
+    setHeatmapError("");
     setSelectedModel("");
     setResolvedInfo(null);
   }
@@ -220,18 +230,23 @@ function AnalysisPage() {
     setError("");
     setPredictionResult(null);
     setPredictMoleculeData(null);
+    setHeatmapResult(null);
+    setHeatmapError("");
 
     const resolvedSmiles = await resolveSmiles(trimmed);
     if (!resolvedSmiles) return;
 
     setLoading(true);
 
-    // Run both endpoints concurrently, independently — one failing shouldn't block the other.
-    const [predictOutcome, visualizeOutcome] = await Promise.all([
+    // Run all three endpoints concurrently, independently — one failing shouldn't block the others.
+    const [predictOutcome, visualizeOutcome, heatmapOutcome] = await Promise.all([
       predictActivity(resolvedSmiles, modelName)
         .then((value) => ({ ok: true as const, value }))
         .catch((err: unknown) => ({ ok: false as const, err })),
       visualizeMolecule(resolvedSmiles)
+        .then((value) => ({ ok: true as const, value }))
+        .catch((err: unknown) => ({ ok: false as const, err })),
+      getPredictionHeatmap(resolvedSmiles, modelName)
         .then((value) => ({ ok: true as const, value }))
         .catch((err: unknown) => ({ ok: false as const, err })),
     ]);
@@ -245,6 +260,12 @@ function AnalysisPage() {
 
     if (visualizeOutcome.ok) {
       setPredictMoleculeData(visualizeOutcome.value);
+    }
+
+    if (heatmapOutcome.ok) {
+      setHeatmapResult(heatmapOutcome.value);
+    } else {
+      setHeatmapError(friendlyErrorMessage(heatmapOutcome.err, "Heatmap unavailable."));
     }
 
     setLoading(false);
@@ -264,6 +285,8 @@ function AnalysisPage() {
     setVisualizeResult(null);
     setPredictionResult(null);
     setPredictMoleculeData(null);
+    setHeatmapResult(null);
+    setHeatmapError("");
     setSelectedModel("");
     setResolvedInfo(null);
   }
@@ -279,6 +302,8 @@ function AnalysisPage() {
     setVisualizeResult(null);
     setPredictionResult(null);
     setPredictMoleculeData(null);
+    setHeatmapResult(null);
+    setHeatmapError("");
     setSelectedModel("");
     setResolvedInfo(null);
   }
@@ -527,45 +552,162 @@ function AnalysisPage() {
         )}
 
         {!loading && mode === "predict" && predictionResult && (
-          <div className="animate-fade-in space-y-4">
+          <div className="animate-fade-in space-y-6">
+            {/* 1. Prediction result */}
+            <div className="rounded-lg border border-surface-border bg-surface-card p-5 space-y-3">
+              <div>
+                <div className="flex items-baseline gap-3">
+                  <p
+                    className={`text-2xl font-bold ${
+                      predictionResult.prediction === "Active"
+                        ? "text-success-text"
+                        : "text-danger-text"
+                    }`}
+                  >
+                    {predictionResult.prediction}
+                  </p>
+                  <p className="text-3xl font-bold text-text-primary">
+                    {(predictionResult.probability * 100).toFixed(1)}%
+                  </p>
+                  <p className="text-xs text-text-muted">probability</p>
+                </div>
+                <p className="mt-1.5 text-sm text-text-secondary">
+                  {predictionResult.prediction === "Active"
+                    ? "This molecule is predicted to inhibit cancer cell growth — a candidate anti-cancer compound."
+                    : "This molecule is predicted to show no significant anti-cancer activity in this screen."}
+                </p>
+              </div>
+
+              <div className="relative h-2 rounded-full bg-primary-50 w-full">
+                <div
+                  className="absolute inset-y-0 left-0 rounded-full bg-primary-500"
+                  style={{ width: `${predictionResult.probability * 100}%` }}
+                />
+                <div
+                  className="absolute inset-y-0 w-0.5 bg-primary-700"
+                  style={{ left: `${predictionResult.threshold * 100}%` }}
+                  title={`Threshold: ${predictionResult.threshold}`}
+                />
+              </div>
+
+              <div className="grid grid-cols-3 gap-2">
+                <div className="rounded-lg border border-surface-border p-2 text-center">
+                  <p className="text-[10px] text-text-muted mb-0.5">Model</p>
+                  <p className="text-xs text-text-primary truncate">{predictionResult.model_name}</p>
+                </div>
+                <div className="rounded-lg border border-surface-border p-2 text-center">
+                  <p className="text-[10px] text-text-muted mb-0.5">Threshold</p>
+                  <p className="text-xs text-text-primary">
+                    {predictionResult.threshold.toFixed(2)}
+                  </p>
+                </div>
+                <div className="rounded-lg border border-surface-border p-2 text-center">
+                  <p className="text-[10px] text-text-muted mb-0.5">Confidence</p>
+                  <span
+                    className={`inline-block text-xs font-medium px-2 py-0.5 rounded-full border ${
+                      confidence === "High confidence"
+                        ? "bg-success-bg text-success-text border-success-border"
+                        : "bg-warning-bg text-warning-text border-warning-border"
+                    }`}
+                  >
+                    {confidence}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* 2. Heatmaps — which atoms / substructures drove this prediction */}
+            <div className="rounded-lg border border-surface-border bg-surface-card p-5 space-y-4">
+              <div>
+                <h2 className="text-sm font-medium text-text-primary">Why this prediction?</h2>
+                <p className="text-xs text-text-secondary mt-0.5">
+                  Colored by contribution — red supports the prediction, blue opposes it; darker
+                  means stronger influence.
+                </p>
+              </div>
+
+              {heatmapResult ? (
+                <div className="grid gap-4 lg:grid-cols-2">
+                  {/* Per-atom heatmap */}
+                  <div className="space-y-2">
+                    <p className="text-[11px] uppercase tracking-wider text-text-muted font-medium">
+                      Per-atom importance
+                    </p>
+                    <div className="rounded-lg bg-white border border-surface-border p-2 flex items-center justify-center overflow-hidden">
+                      <div
+                        className="w-full flex items-center justify-center [&>svg]:max-w-full [&>svg]:h-auto"
+                        dangerouslySetInnerHTML={{ __html: heatmapResult.atom_heatmap_svg }}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      {heatmapResult.top_atoms.slice(0, 5).map((atom, i) => (
+                        <div
+                          key={`${atom.atom_idx}-${i}`}
+                          className="flex items-center justify-between gap-2 text-xs"
+                        >
+                          <span className="flex items-center gap-1.5 text-text-secondary">
+                            <span
+                              className={`h-2 w-2 rounded-full ${
+                                atom.direction === "supporting" ? "bg-danger-text" : "bg-primary-500"
+                              }`}
+                            />
+                            {atom.element}
+                            <span className="text-text-muted">#{atom.atom_idx}</span>
+                          </span>
+                          <span className="text-text-primary font-mono">{atom.percentage.toFixed(1)}%</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Substructure heatmap */}
+                  <div className="space-y-2">
+                    <p className="text-[11px] uppercase tracking-wider text-text-muted font-medium">
+                      Top contributing substructures
+                    </p>
+                    <div className="rounded-lg bg-white border border-surface-border p-2 flex items-center justify-center overflow-hidden">
+                      <div
+                        className="w-full flex items-center justify-center [&>svg]:max-w-full [&>svg]:h-auto"
+                        dangerouslySetInnerHTML={{ __html: heatmapResult.substructure_heatmap_svg }}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      {heatmapResult.top_substructures.slice(0, 5).map((sub, i) => (
+                        <div key={`${sub.token}-${i}`} className="flex items-center justify-between gap-2 text-xs">
+                          <span className="flex items-center gap-1.5 text-text-secondary min-w-0">
+                            <span
+                              className={`h-2 w-2 rounded-full shrink-0 ${
+                                sub.direction === "supporting" ? "bg-danger-text" : "bg-primary-500"
+                              }`}
+                            />
+                            <span className="truncate" title={sub.description}>
+                              {sub.description}
+                            </span>
+                            <span className="text-text-muted shrink-0">×{sub.occurrences}</span>
+                          </span>
+                          <span className="text-text-primary font-mono shrink-0">{sub.percentage.toFixed(1)}%</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-sm text-text-muted">
+                  {heatmapError || "Generating heatmaps…"}
+                </p>
+              )}
+            </div>
+
+            {/* 3. RDKit molecule details */}
             <div className="grid gap-4 lg:grid-cols-[1fr_1fr]">
-              {/* Left: molecule card */}
               <div className="space-y-3">
                 {predictMoleculeData ? (
-                  <>
-                    <div className="rounded-lg bg-surface-card border border-surface-border p-4 flex items-center justify-center max-h-[280px] overflow-hidden">
-                      <div
-                        className="w-full h-full flex items-center justify-center [&>svg]:max-w-full [&>svg]:max-h-[240px] [&>svg]:h-auto [&>svg]:object-contain"
-                        dangerouslySetInnerHTML={{ __html: predictMoleculeData.svg }}
-                      />
-                    </div>
-                    <div className="rounded-lg border border-surface-border bg-surface-card p-4 grid grid-cols-2 gap-x-4">
-                      <PropRow
-                        label="Formula"
-                        value={predictMoleculeData.physicochemical.formula}
-                      />
-                      <PropRow
-                        label="Molecular weight"
-                        value={`${predictMoleculeData.physicochemical.mw} g/mol`}
-                      />
-                      <PropRow
-                        label="LogP"
-                        value={predictMoleculeData.lipophilicity.crippen_logp}
-                      />
-                      <PropRow
-                        label="TPSA"
-                        value={`${predictMoleculeData.physicochemical.tpsa} Å²`}
-                      />
-                      <PropRow
-                        label="H-bond donors"
-                        value={predictMoleculeData.physicochemical.hbd}
-                      />
-                      <PropRow
-                        label="H-bond acceptors"
-                        value={predictMoleculeData.physicochemical.hba}
-                      />
-                    </div>
-                  </>
+                  <div className="rounded-lg bg-surface-card border border-surface-border p-4 flex items-center justify-center max-h-[280px] overflow-hidden">
+                    <div
+                      className="w-full h-full flex items-center justify-center [&>svg]:max-w-full [&>svg]:max-h-[240px] [&>svg]:h-auto [&>svg]:object-contain"
+                      dangerouslySetInnerHTML={{ __html: predictMoleculeData.svg }}
+                    />
+                  </div>
                 ) : (
                   <div className="rounded-lg border border-surface-border bg-surface-card p-6 max-h-[280px] flex items-center justify-center">
                     <p className="text-sm text-text-muted text-center">
@@ -575,68 +717,34 @@ function AnalysisPage() {
                 )}
               </div>
 
-              {/* Right: prediction results */}
-              <div className="rounded-lg border border-surface-border bg-surface-card p-5 space-y-3">
-                <div>
-                  <div className="flex items-baseline gap-3">
-                    <p
-                      className={`text-2xl font-bold ${
-                        predictionResult.prediction === "Active"
-                          ? "text-success-text"
-                          : "text-danger-text"
-                      }`}
-                    >
-                      {predictionResult.prediction}
-                    </p>
-                    <p className="text-3xl font-bold text-text-primary">
-                      {(predictionResult.probability * 100).toFixed(1)}%
-                    </p>
-                    <p className="text-xs text-text-muted">probability</p>
-                  </div>
-                  <p className="mt-1.5 text-sm text-text-secondary">
-                    {predictionResult.prediction === "Active"
-                      ? "This molecule is predicted to inhibit cancer cell growth — a candidate anti-cancer compound."
-                      : "This molecule is predicted to show no significant anti-cancer activity in this screen."}
-                  </p>
-                </div>
-
-                <div className="relative h-2 rounded-full bg-primary-50 w-full">
-                  <div
-                    className="absolute inset-y-0 left-0 rounded-full bg-primary-500"
-                    style={{ width: `${predictionResult.probability * 100}%` }}
+              {predictMoleculeData && (
+                <div className="rounded-lg border border-surface-border bg-surface-card p-4 grid grid-cols-2 gap-x-4 content-start">
+                  <PropRow
+                    label="Formula"
+                    value={predictMoleculeData.physicochemical.formula}
                   />
-                  <div
-                    className="absolute inset-y-0 w-0.5 bg-primary-700"
-                    style={{ left: `${predictionResult.threshold * 100}%` }}
-                    title={`Threshold: ${predictionResult.threshold}`}
+                  <PropRow
+                    label="Molecular weight"
+                    value={`${predictMoleculeData.physicochemical.mw} g/mol`}
+                  />
+                  <PropRow
+                    label="LogP"
+                    value={predictMoleculeData.lipophilicity.crippen_logp}
+                  />
+                  <PropRow
+                    label="TPSA"
+                    value={`${predictMoleculeData.physicochemical.tpsa} Å²`}
+                  />
+                  <PropRow
+                    label="H-bond donors"
+                    value={predictMoleculeData.physicochemical.hbd}
+                  />
+                  <PropRow
+                    label="H-bond acceptors"
+                    value={predictMoleculeData.physicochemical.hba}
                   />
                 </div>
-
-                <div className="grid grid-cols-3 gap-2">
-                  <div className="rounded-lg border border-surface-border p-2 text-center">
-                    <p className="text-[10px] text-text-muted mb-0.5">Model</p>
-                    <p className="text-xs text-text-primary truncate">{predictionResult.model_name}</p>
-                  </div>
-                  <div className="rounded-lg border border-surface-border p-2 text-center">
-                    <p className="text-[10px] text-text-muted mb-0.5">Threshold</p>
-                    <p className="text-xs text-text-primary">
-                      {predictionResult.threshold.toFixed(2)}
-                    </p>
-                  </div>
-                  <div className="rounded-lg border border-surface-border p-2 text-center">
-                    <p className="text-[10px] text-text-muted mb-0.5">Confidence</p>
-                    <span
-                      className={`inline-block text-xs font-medium px-2 py-0.5 rounded-full border ${
-                        confidence === "High confidence"
-                          ? "bg-success-bg text-success-text border-success-border"
-                          : "bg-warning-bg text-warning-text border-warning-border"
-                      }`}
-                    >
-                      {confidence}
-                    </span>
-                  </div>
-                </div>
-              </div>
+              )}
             </div>
 
             {/* Pipeline info */}
