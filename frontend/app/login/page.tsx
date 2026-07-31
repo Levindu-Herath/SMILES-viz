@@ -45,7 +45,7 @@ export default function LoginPage() {
         {/* Heading */}
         <div className="text-center">
           <h1 className="text-2xl font-semibold text-text-primary tracking-tight">
-            Sign in to SMILES Viz
+            Sign in to Molytica
           </h1>
           <p className="mt-2 text-sm text-text-secondary">
             Visualize molecules and analyze properties
