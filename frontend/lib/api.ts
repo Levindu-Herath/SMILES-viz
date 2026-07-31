@@ -1,5 +1,5 @@
 import type { MoleculeData } from "@/types/molecule";
-import type { AvailableModelsResponse, PredictionResult } from "@/types/prediction";
+import type { AvailableModelsResponse, HeatmapResult, PredictionResult } from "@/types/prediction";
 import type { DatasetListResponse, DownloadUrlResponse, UploadResponse } from "@/types/dataset";
 import { supabase } from "./supabase";
 
@@ -91,6 +91,30 @@ export async function predictActivity(
   const headers = await getAuthHeaders();
 
   const res = await fetch(`${getApiBase()}/api/predict`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ smiles, model_name: modelName }),
+  });
+
+  if (res.status === 401) {
+    throw new ApiError("Sign in required for this feature.", 401);
+  }
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new ApiError(body.detail || `Server error: ${res.status}`, res.status);
+  }
+
+  return res.json();
+}
+
+export async function getPredictionHeatmap(
+  smiles: string,
+  modelName: string,
+): Promise<HeatmapResult> {
+  const headers = await getAuthHeaders();
+
+  const res = await fetch(`${getApiBase()}/api/predict/heatmap`, {
     method: "POST",
     headers,
     body: JSON.stringify({ smiles, model_name: modelName }),

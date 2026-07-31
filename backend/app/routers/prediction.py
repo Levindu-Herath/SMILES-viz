@@ -10,10 +10,12 @@ from fastapi import APIRouter, Depends, HTTPException
 from app.core.auth import get_current_user
 from app.schemas.prediction import (
     AvailableModelsResponse,
+    HeatmapResponse,
     ModelInfo,
     PredictionRequest,
     PredictionResponse,
 )
+from app.services.interpretability_service import compute_prediction_heatmap
 from ml_pipeline.inference import get_predictor
 
 router = APIRouter(prefix="/api/predict", tags=["prediction"])
@@ -35,6 +37,19 @@ def predict_activity(
     """Auth optional."""
     try:
         result = get_predictor().predict(req.smiles, req.model_name)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+    return result
+
+
+@router.post("/heatmap", response_model=HeatmapResponse)
+def predict_heatmap(
+    req: PredictionRequest,
+    user: Optional[dict] = Depends(get_current_user),
+):
+    """Auth optional. Per-atom importance heatmap explaining a prediction."""
+    try:
+        result = compute_prediction_heatmap(req.smiles, req.model_name)
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc))
     return result
