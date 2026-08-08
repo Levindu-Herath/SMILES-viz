@@ -628,51 +628,48 @@ function AnalysisPage() {
 
               {heatmapResult ? (
                 <div className="grid gap-4 lg:grid-cols-2">
-                  {/* Per-atom heatmap */}
+                  {/* Score A: atom_contribution x dict_weight */}
                   <div className="space-y-2">
-                    <p className="text-[11px] uppercase tracking-wider text-text-muted font-medium">
-                      Per-atom importance
-                    </p>
                     <div className="rounded-lg bg-white border border-surface-border p-2 flex items-center justify-center overflow-hidden">
-                      <div
-                        className="w-full flex items-center justify-center [&>svg]:max-w-full [&>svg]:h-auto"
-                        dangerouslySetInnerHTML={{ __html: heatmapResult.atom_heatmap_svg }}
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={heatmapResult.score_a_heatmap_png}
+                        alt="Score A substructure heatmap"
+                        className="max-w-full h-auto"
                       />
                     </div>
                     <div className="space-y-1">
-                      {heatmapResult.top_atoms.slice(0, 5).map((atom, i) => (
-                        <div
-                          key={`${atom.atom_idx}-${i}`}
-                          className="flex items-center justify-between gap-2 text-xs"
-                        >
-                          <span className="flex items-center gap-1.5 text-text-secondary">
+                      {heatmapResult.top_substructures_a.slice(0, 5).map((sub, i) => (
+                        <div key={`${sub.token}-${i}`} className="flex items-center justify-between gap-2 text-xs">
+                          <span className="flex items-center gap-1.5 text-text-secondary min-w-0">
                             <span
-                              className={`h-2 w-2 rounded-full ${
-                                atom.direction === "supporting" ? "bg-danger-text" : "bg-primary-500"
+                              className={`h-2 w-2 rounded-full shrink-0 ${
+                                sub.direction === "supporting" ? "bg-danger-text" : "bg-primary-500"
                               }`}
                             />
-                            {atom.element}
-                            <span className="text-text-muted">#{atom.atom_idx}</span>
+                            <span className="truncate" title={sub.description}>
+                              {sub.description}
+                            </span>
+                            <span className="text-text-muted shrink-0">×{sub.occurrences}</span>
                           </span>
-                          <span className="text-text-primary font-mono">{atom.percentage.toFixed(1)}%</span>
+                          <span className="text-text-primary font-mono shrink-0">{sub.percentage.toFixed(1)}%</span>
                         </div>
                       ))}
                     </div>
                   </div>
 
-                  {/* Substructure heatmap */}
+                  {/* Score B: Score A x wl_feature_count */}
                   <div className="space-y-2">
-                    <p className="text-[11px] uppercase tracking-wider text-text-muted font-medium">
-                      Top contributing substructures
-                    </p>
                     <div className="rounded-lg bg-white border border-surface-border p-2 flex items-center justify-center overflow-hidden">
-                      <div
-                        className="w-full flex items-center justify-center [&>svg]:max-w-full [&>svg]:h-auto"
-                        dangerouslySetInnerHTML={{ __html: heatmapResult.substructure_heatmap_svg }}
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={heatmapResult.score_b_heatmap_png}
+                        alt="Score B substructure heatmap"
+                        className="max-w-full h-auto"
                       />
                     </div>
                     <div className="space-y-1">
-                      {heatmapResult.top_substructures.slice(0, 5).map((sub, i) => (
+                      {heatmapResult.top_substructures_b.slice(0, 5).map((sub, i) => (
                         <div key={`${sub.token}-${i}`} className="flex items-center justify-between gap-2 text-xs">
                           <span className="flex items-center gap-1.5 text-text-secondary min-w-0">
                             <span

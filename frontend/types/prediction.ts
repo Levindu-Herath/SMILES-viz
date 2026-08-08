@@ -19,14 +19,6 @@ export interface PredictionResult {
   threshold: number;
 }
 
-export interface TopAtom {
-  atom_idx: number;
-  element: string;
-  score: number;
-  percentage: number;
-  direction: "supporting" | "opposing";
-}
-
 export interface TopSubstructure {
   token: string;
   description: string;
@@ -41,8 +33,8 @@ export interface HeatmapResult {
   model_name: string;
   prediction: "Active" | "Inactive";
   confidence: number | null;
-  atom_heatmap_svg: string;
-  top_atoms: TopAtom[];
-  substructure_heatmap_svg: string;
-  top_substructures: TopSubstructure[];
+  score_a_heatmap_png: string;
+  top_substructures_a: TopSubstructure[];
+  score_b_heatmap_png: string;
+  top_substructures_b: TopSubstructure[];
 }
