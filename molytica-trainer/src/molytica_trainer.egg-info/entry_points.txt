@@ -1,0 +1,2 @@
+[console_scripts]
+molytica-train = molytica_trainer.cli:main
