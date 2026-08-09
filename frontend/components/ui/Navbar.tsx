@@ -8,6 +8,7 @@ const NAV_ITEMS = [
   { label: "Analyze", href: "/visualize" },
   { label: "Datasets", href: "/datasets" },
   { label: "Train", href: "/train" },
+  { label: "About", href: "/about" },
 ] as const;
 
 export function Navbar() {
