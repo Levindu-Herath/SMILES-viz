@@ -134,7 +134,7 @@ const CLASSIFIERS = [
   { value: "random_forest", label: "Random Forest" },
 ] as const;
 
-const JOB_ID_STORAGE_KEY = "smiles-viz-trainer-job-id";
+const JOB_ID_STORAGE_KEY = "molytica-trainer-job-id";
 
 type PageState = "checking" | "disconnected" | "form" | "training" | "complete" | "failed";
 
@@ -451,13 +451,13 @@ export default function TrainPage() {
                   </SetupStep>
 
                   <SetupStep number={3} title="Install the trainer package">
-                    <CodeBlock code="pip install smiles-viz-trainer" />
+                    <CodeBlock code="pip install molytica-trainer" />
                   </SetupStep>
 
                   <SetupStep number={4} title="Start the trainer server">
-                    <CodeBlock code="python -m smiles_viz_trainer.cli" />
+                    <CodeBlock code="python -m molytica_trainer.cli" />
                     <p className="text-xs text-text-muted italic">
-                      On Windows, use this instead of the smiles-train command
+                      On Windows, use this instead of the molytica-train command
                     </p>
                   </SetupStep>
 

@@ -25,7 +25,7 @@ def _allowed_origins() -> list[str]:
 
 
 def create_app() -> FastAPI:
-    app = FastAPI(title="smiles-viz-trainer")
+    app = FastAPI(title="molytica-trainer")
 
     app.add_middleware(
         CORSMiddleware,
