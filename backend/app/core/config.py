@@ -54,6 +54,10 @@ class Settings(BaseSettings):
     SUPABASE_SERVICE_ROLE_KEY: str = ""
 
     # ML prediction pipeline
+    # Default path names a specific trained bundle inside the pinned `sparsegraphs`
+    # submodule commit (see .gitmodules). If the submodule is advanced to a commit
+    # whose exported bundle has a different directory name, update this default or
+    # set the ARTIFACT_DIR env var to override it.
     ARTIFACT_DIR: str = (
         "sparsegraphs/artifacts/wl_fddl_gpu_nci_full_atoms32_20260708_202033_20260708_202100"
     )
