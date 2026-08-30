@@ -1,5 +1,6 @@
 import asyncio
 import json
+import os
 import threading
 from pathlib import Path
 
@@ -26,7 +27,11 @@ def _run_training_thread(job_id: str, req: TrainRequest, smiles_col: str, target
         def progress_callback(stage, progress, stage_progress, message):
             job_manager.update_progress(job_id, stage, progress, stage_progress, message)
 
-        output_dir = req.output_dir or str(Path.home() / "smiles-viz-models")
+        output_dir = (
+            req.output_dir
+            or os.environ.get("ARTIFACT_DIR")
+            or str(Path.home() / "smiles-viz-models")
+        )
 
         result_data = run_training(
             file_path=req.file_path,
@@ -58,13 +63,13 @@ def _run_training_thread(job_id: str, req: TrainRequest, smiles_col: str, target
 async def start_training(req: TrainRequest):
     validation = validate_dataset(req.file_path)
     if not validation.is_valid:
-        raise HTTPException(status_code=400, detail=validation.errors)
+        raise HTTPException(status_code=422, detail=validation.errors)
 
     smiles_col = req.smiles_column or validation.detected_smiles_column
     target_col = req.target_column or validation.detected_target_column
 
     if validation.file_format == "csv" and not smiles_col:
-        raise HTTPException(status_code=400, detail="smiles_column is required for CSV datasets")
+        raise HTTPException(status_code=422, detail="smiles_column is required for CSV datasets")
 
     try:
         job_id = job_manager.create_job(req.classifier)

@@ -8,7 +8,8 @@ from pydantic import BaseModel
 
 router = APIRouter()
 
-ALLOWED_EXTENSIONS = {".csv", ".tsv", ".sdf"}
+ALLOWED_EXTENSIONS = {".csv", ".tsv", ".txt", ".sdf"}
+MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB, mirrors backend/app/services/dataset_service.py
 UPLOAD_DIR = Path.home() / "smiles-viz-uploads"
 
 
@@ -19,8 +20,15 @@ async def upload_dataset(file: UploadFile):
 
     if ext not in ALLOWED_EXTENSIONS:
         raise HTTPException(
-            status_code=400,
-            detail=f"Unsupported file type '{ext}'. Only .csv, .tsv, and .sdf files are accepted.",
+            status_code=422,
+            detail=f"Unsupported file type '{ext}'. Only .csv, .tsv, .txt, and .sdf files are accepted.",
+        )
+
+    contents = await file.read()
+    if len(contents) > MAX_FILE_SIZE:
+        raise HTTPException(
+            status_code=422,
+            detail=f"File exceeds the {MAX_FILE_SIZE // (1024 * 1024)}MB size limit.",
         )
 
     UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
@@ -28,7 +36,6 @@ async def upload_dataset(file: UploadFile):
     safe_name = f"{uuid.uuid4().hex}_{Path(original_name).name}"
     dest_path = UPLOAD_DIR / safe_name
 
-    contents = await file.read()
     with open(dest_path, "wb") as f:
         f.write(contents)
 

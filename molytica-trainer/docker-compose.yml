@@ -1,0 +1,31 @@
+services:
+  trainer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: molytica-trainer:cpu
+    # Loopback-only: never publish as "5000:5000" (that would bind all
+    # interfaces on the host). The process still binds 0.0.0.0 *inside* the
+    # container — that's required for this mapping to work at all.
+    ports:
+      - "127.0.0.1:5000:5000"
+    # Service-level resource limits (Compose-Spec keys honoured by
+    # `docker compose up` in normal, non-swarm usage) so a runaway training
+    # job can't exhaust the host. `deploy.resources` below is intentionally
+    # NOT used for this purpose — it only takes effect under `docker stack
+    # deploy` / swarm mode, and is silently ignored by plain `compose up`.
+    mem_limit: 4g
+    cpus: 2.0
+    volumes:
+      # Optional pre-placed datasets, referenced by container-side file_path
+      # (e.g. /data/my_dataset.csv) via /validate-dataset or /train — read-only.
+      - ./data:/data:ro
+      # Trained model bundles (pipeline/artifact_store.py) land here.
+      - ./artifacts:/artifacts
+    environment:
+      # The trainer's own DEFAULT_ORIGINS (localhost:3000 pair) are always
+      # allowed; set ALLOWED_ORIGINS to add a deployed frontend's exact
+      # origin without rebuilding the image.
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-}
+      - ARTIFACT_DIR=/artifacts
+    restart: unless-stopped

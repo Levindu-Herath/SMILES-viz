@@ -27,10 +27,15 @@ def _allowed_origins() -> list[str]:
 def create_app() -> FastAPI:
     app = FastAPI(title="molytica-trainer")
 
+    # No wildcard/regex origin: this server runs locally, reads local files, and
+    # executes jobs, so allow_credentials=True must be paired with an explicit
+    # origin allowlist only (Starlette echoes the matched origin, never "*").
+    # The deployed frontend's exact origin belongs in ALLOWED_ORIGINS, not a
+    # "*.vercel.app" pattern that would let any Vercel-hosted site ride the
+    # user's credentials against their local trainer.
     app.add_middleware(
         CORSMiddleware,
         allow_origins=_allowed_origins(),
-        allow_origin_regex=r"https://.*\.vercel\.app",
         allow_credentials=True,
         allow_methods=["GET", "POST"],
         allow_headers=["*"],

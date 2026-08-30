@@ -156,7 +156,8 @@ class FDDLGPU(DictLearner):
 
         # Setup weights on GPU — seed injected per run (Monte Carlo CV)
         torch.manual_seed(self.seed)
-        torch.cuda.manual_seed(self.seed)
+        if torch.cuda.is_available():
+            torch.cuda.manual_seed(self.seed)
         self.D = torch.zeros((features, total_atoms), device=self.device)
         col_start = 0
 

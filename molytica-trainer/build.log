@@ -1,0 +1,72 @@
+ Image molytica-trainer:cpu Building 
+#1 [internal] load local bake definitions
+#1 reading from stdin 583B done
+#1 DONE 0.0s
+
+#2 [internal] load build definition from Dockerfile
+#2 transferring dockerfile: 3.47kB done
+#2 DONE 0.0s
+
+#3 [internal] load metadata for docker.io/continuumio/miniconda3:24.9.2-0
+#3 DONE 0.1s
+
+#4 [internal] load metadata for docker.io/library/debian:bookworm-slim
+#4 DONE 3.9s
+
+#5 [internal] load .dockerignore
+#5 transferring context: 107B done
+#5 DONE 0.0s
+
+#6 [stage-1 1/4] FROM docker.io/library/debian:bookworm-slim@sha256:88200866dfff7ea7f5cbcb6ec7c8a701889efe6fe859fe64d6990e4b07ea4171
+#6 resolve docker.io/library/debian:bookworm-slim@sha256:88200866dfff7ea7f5cbcb6ec7c8a701889efe6fe859fe64d6990e4b07ea4171 0.0s done
+#6 DONE 0.0s
+
+#7 [builder 1/7] FROM docker.io/continuumio/miniconda3:24.9.2-0@sha256:15f887d74b3ffe0fa21a741bfeaec8ccc8947b527acfb7542eff84ae1bfdd6bf
+#7 resolve docker.io/continuumio/miniconda3:24.9.2-0@sha256:15f887d74b3ffe0fa21a741bfeaec8ccc8947b527acfb7542eff84ae1bfdd6bf 0.0s done
+#7 DONE 0.0s
+
+#8 [internal] load build context
+#8 transferring context: 2.43kB done
+#8 DONE 0.0s
+
+#9 [builder 3/7] RUN conda create -n molytica python=3.11 rdkit -c conda-forge -y &&     conda clean -afy
+#9 CACHED
+
+#10 [builder 6/7] COPY src ./src
+#10 CACHED
+
+#11 [stage-1 3/4] COPY --from=builder /opt/conda/envs/molytica /opt/conda/envs/molytica
+#11 CACHED
+
+#12 [builder 4/7] RUN pip install --no-cache-dir torch==2.4.1 --index-url https://download.pytorch.org/whl/cpu
+#12 CACHED
+
+#13 [builder 7/7] RUN pip install --no-cache-dir . &&     find /opt/conda/envs/molytica -type d -name "__pycache__" -exec rm -rf {} + &&     find /opt/conda/envs/molytica -type d ( -iname "test" -o -iname "tests" ) -path "*/site-packages/*" -exec rm -rf {} +
+#13 CACHED
+
+#14 [builder 5/7] COPY pyproject.toml README.md ./
+#14 CACHED
+
+#15 [stage-1 2/4] RUN apt-get update -q &&     apt-get install -y --no-install-recommends         ca-certificates libglib2.0-0 libsm6 libxext6 libxrender1 &&     apt-get clean && rm -rf /var/lib/apt/lists/*
+#15 CACHED
+
+#16 [builder 2/7] WORKDIR /app
+#16 CACHED
+
+#17 [stage-1 4/4] WORKDIR /app
+#17 CACHED
+
+#18 exporting to image
+#18 exporting layers done
+#18 exporting manifest sha256:134c5a93bbba1b19784f2a54582482503980438b0ca9dcc634e45a6394651a0d done
+#18 exporting config sha256:273690282c677f4367d7aa64105e66daf14681759e5ca0def763e90b9de728d2 done
+#18 exporting attestation manifest sha256:576a785392aeab44e34b6423bc1a7559a8ec5e323a677809a1f63bcdefb120bb 0.0s done
+#18 exporting manifest list sha256:368e2d6724afd72fc1ebb3ee40d9eed82b1f6676dfdabca1765acfad05cf23b5
+#18 exporting manifest list sha256:368e2d6724afd72fc1ebb3ee40d9eed82b1f6676dfdabca1765acfad05cf23b5 0.0s done
+#18 naming to docker.io/library/molytica-trainer:cpu done
+#18 unpacking to docker.io/library/molytica-trainer:cpu done
+#18 DONE 0.1s
+
+#19 resolving provenance for metadata file
+#19 DONE 0.0s
+ Image molytica-trainer:cpu Built 

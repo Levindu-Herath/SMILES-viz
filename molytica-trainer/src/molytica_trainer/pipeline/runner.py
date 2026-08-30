@@ -19,6 +19,7 @@ from molytica_trainer.pipeline.evaluator import Evaluator
 from molytica_trainer.pipeline.seeding import seed_everything
 from molytica_trainer.pipeline.artifact_store import save_bundle
 from molytica_trainer.server.schemas.training import TrainingStage
+from molytica_trainer.utils.dataset import csv_sep_for_extension
 
 # Split proportions — same as sparsegraphs export pipeline
 TEST_SIZE = 0.15
@@ -55,7 +56,8 @@ def _map_labels_to_pm1(labels_raw: list) -> np.ndarray:
 
 def _load_csv_dataset(file_path: str, smiles_column: str, target_column: str, update: Callable):
     """Load a CSV dataset and convert each row's SMILES to a graph, skipping invalid ones."""
-    df = pd.read_csv(file_path)
+    sep = csv_sep_for_extension(Path(file_path).suffix) or ","
+    df = pd.read_csv(file_path, sep=sep)
     smiles_list = df[smiles_column].tolist()
     labels = _map_labels_to_pm1(df[target_column].tolist())
 

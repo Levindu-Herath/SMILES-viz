@@ -5,6 +5,8 @@ import pandas as pd
 from rdkit import Chem
 from rdkit.Chem import SDMolSupplier
 
+MIN_DATASET_ROWS = 20
+
 SMILES_COLUMN_CANDIDATES = [
     "smiles",
     "SMILES",
@@ -104,15 +106,36 @@ def _detect_target_column(df: pd.DataFrame, smiles_column: str | None) -> str | 
     return None
 
 
-def _validate_csv(result: DatasetValidationResult) -> None:
+def csv_sep_for_extension(ext: str) -> str | None:
+    """Delimiter to use for a delimited-text extension, or None if not delimited.
+
+    Single source of truth for the extension -> separator mapping, shared by
+    dataset validation and the training runner so both parse a given file the
+    same way.
+    """
+    ext = ext.lower()
+    if ext == ".csv":
+        return ","
+    if ext in (".tsv", ".txt"):
+        return "\t"
+    return None
+
+
+def _validate_csv(result: DatasetValidationResult, sep: str = ",") -> None:
     try:
-        df = pd.read_csv(result.file_path)
+        df = pd.read_csv(result.file_path, sep=sep)
     except Exception as exc:
         result.errors.append(f"Failed to read CSV file: {exc}")
         return
 
     result.columns = list(df.columns)
     result.total_rows = len(df)
+
+    if result.total_rows < MIN_DATASET_ROWS:
+        result.errors.append(
+            f"Dataset has only {result.total_rows} row(s); at least {MIN_DATASET_ROWS} are required for training."
+        )
+        return
 
     smiles_column = _detect_smiles_column(df)
     result.detected_smiles_column = smiles_column
@@ -192,6 +215,12 @@ def _validate_sdf(result: DatasetValidationResult) -> None:
     result.detected_smiles_column = None
     result.detected_target_column = target_column
 
+    if result.total_rows < MIN_DATASET_ROWS:
+        result.errors.append(
+            f"Dataset has only {result.total_rows} row(s); at least {MIN_DATASET_ROWS} are required for training."
+        )
+        return
+
     if target_column is None:
         result.errors.append("No target/label column detected")
     else:
@@ -217,14 +246,15 @@ def validate_dataset(file_path: str) -> DatasetValidationResult:
     _, ext = os.path.splitext(file_path)
     ext = ext.lower()
 
-    if ext == ".csv":
+    sep = csv_sep_for_extension(ext)
+    if sep is not None:
         result.file_format = "csv"
-        _validate_csv(result)
+        _validate_csv(result, sep=sep)
     elif ext == ".sdf":
         result.file_format = "sdf"
         _validate_sdf(result)
     else:
-        result.errors.append("Unsupported file extension, expected .csv or .sdf")
+        result.errors.append("Unsupported file extension, expected .csv, .tsv, .txt, or .sdf")
         return result
 
     result.is_valid = len(result.errors) == 0
