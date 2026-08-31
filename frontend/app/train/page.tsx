@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { FolderBrowserModal } from "@/components/FolderBrowserModal";
 import { publishModel } from "@/lib/api";
 import {
+  cancelTraining,
   checkTrainerHealth,
   fetchModelArchive,
   getTrainingResult,
@@ -138,7 +139,7 @@ const CLASSIFIERS = [
 
 const JOB_ID_STORAGE_KEY = "molytica-trainer-job-id";
 
-type PageState = "checking" | "disconnected" | "form" | "training" | "complete" | "failed";
+type PageState = "checking" | "disconnected" | "form" | "training" | "complete" | "failed" | "cancelled";
 
 function formatElapsed(seconds: number): string {
   const mins = Math.floor(seconds / 60);
@@ -181,11 +182,15 @@ export default function TrainPage() {
   const [starting, setStarting] = useState(false);
 
   // Training progress state
+  const [jobId, setJobId] = useState<string | null>(null);
   const [jobStatus, setJobStatus] = useState<JobStatus | null>(null);
   const [trainingStartedAt, setTrainingStartedAt] = useState<number | null>(null);
   const [elapsed, setElapsed] = useState(0);
   const [result, setResult] = useState<TrainingResult | null>(null);
   const [failureError, setFailureError] = useState("");
+  const [cancelledMessage, setCancelledMessage] = useState("");
+  const [cancelling, setCancelling] = useState(false);
+  const [cancelRequested, setCancelRequested] = useState(false);
 
   // Publish-to-cloud state
   const [publishState, setPublishState] = useState<"idle" | "publishing" | "published" | "error">(
@@ -241,6 +246,7 @@ export default function TrainPage() {
 
   function beginStreaming(id: string) {
     cleanupSubscription();
+    setJobId(id);
     unsubscribeRef.current = subscribeToTraining(
       id,
       (status) => {
@@ -258,7 +264,26 @@ export default function TrainPage() {
         sessionStorage.removeItem(JOB_ID_STORAGE_KEY);
         cleanupSubscription();
       },
+      (message) => {
+        setCancelledMessage(message);
+        setPageState("cancelled");
+        sessionStorage.removeItem(JOB_ID_STORAGE_KEY);
+        cleanupSubscription();
+      },
     );
+  }
+
+  async function handleCancelTraining() {
+    if (!jobId || cancelling || cancelRequested) return;
+    setCancelling(true);
+    try {
+      await cancelTraining(jobId);
+      setCancelRequested(true);
+    } catch {
+      // The job may have already finished; the stream will reflect the true outcome.
+    } finally {
+      setCancelling(false);
+    }
   }
 
   async function checkConnection() {
@@ -284,6 +309,12 @@ export default function TrainPage() {
         if (status.status === "FAILED") {
           setFailureError(status.error ?? "Training failed");
           setPageState("failed");
+          sessionStorage.removeItem(JOB_ID_STORAGE_KEY);
+          return;
+        }
+        if (status.status === "CANCELLED") {
+          setCancelledMessage(status.message ?? "Training was cancelled.");
+          setPageState("cancelled");
           sessionStorage.removeItem(JOB_ID_STORAGE_KEY);
           return;
         }
@@ -347,6 +378,7 @@ export default function TrainPage() {
       });
       sessionStorage.setItem(JOB_ID_STORAGE_KEY, res.job_id);
       setJobStatus(null);
+      setCancelRequested(false);
       setTrainingStartedAt(Date.now());
       setElapsed(0);
       setPageState("training");
@@ -377,9 +409,12 @@ export default function TrainPage() {
   function resetToForm() {
     cleanupSubscription();
     sessionStorage.removeItem(JOB_ID_STORAGE_KEY);
+    setJobId(null);
     setJobStatus(null);
     setResult(null);
     setFailureError("");
+    setCancelledMessage("");
+    setCancelRequested(false);
     setTrainingStartedAt(null);
     setElapsed(0);
     setStartError("");
@@ -798,6 +833,44 @@ export default function TrainPage() {
             <p className="text-sm text-text-secondary">
               {jobStatus?.message ?? "Waiting for the trainer to report progress…"}
             </p>
+
+            {cancelRequested ? (
+              <div className="flex items-center gap-3 rounded-md border border-warning-border bg-warning-bg px-4 py-3">
+                <span className="h-3.5 w-3.5 shrink-0 animate-spin rounded-full border-2 border-warning-text border-t-transparent" />
+                <p className="text-sm text-warning-text">Stopping training…</p>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={handleCancelTraining}
+                disabled={cancelling}
+                className="w-full rounded-md border border-danger-border py-2.5 text-sm font-semibold text-danger-text hover:bg-danger-bg disabled:opacity-40 disabled:cursor-not-allowed transition-colors duration-150"
+              >
+                {cancelling ? "Stopping…" : "Cancel Training"}
+              </button>
+            )}
+          </div>
+        )}
+
+        {pageState === "cancelled" && (
+          <div className="space-y-6">
+            <div className="rounded-lg border border-surface-border bg-surface-card p-6 space-y-3">
+              <div className="flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-text-muted" />
+                <h2 className="text-base font-semibold text-text-primary">Training cancelled</h2>
+              </div>
+              <p className="text-sm text-text-secondary">
+                {cancelledMessage || "Training was cancelled before it finished."}
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={resetToForm}
+              className="w-full rounded-md bg-primary-500 py-2.5 text-sm font-semibold text-white hover:bg-primary-600 active:bg-primary-700 transition-colors duration-150"
+            >
+              Start New Training
+            </button>
           </div>
         )}
 
