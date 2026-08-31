@@ -10,6 +10,7 @@ from pydantic import BaseModel
 class PredictionRequest(BaseModel):
     smiles: str
     model_name: str = "Logistic Regression"
+    model_id: str = "reference"
 
 
 class PredictionResponse(BaseModel):

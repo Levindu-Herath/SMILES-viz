@@ -217,3 +217,13 @@ export async function getTrainingResult(jobId: string): Promise<TrainingResult> 
   if (!res.ok) throw new Error(`Failed to get result: ${res.status}`);
   return res.json();
 }
+
+export async function fetchModelArchive(bundlePath: string): Promise<Blob> {
+  const url = `${TRAINER_BASE}/models/archive?path=${encodeURIComponent(bundlePath)}`;
+  const res = await fetch(url);
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.detail || `Failed to fetch model archive: ${res.status}`);
+  }
+  return res.blob();
+}
