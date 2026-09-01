@@ -51,6 +51,14 @@ class _NumpySparseCoder:
         self.lambda2 = lambda2
         self.eta = eta
         self.ipm_iters = ipm_iters
+        # D is fixed for the lifetime of this object, so its spectral norm --
+        # and therefore the ISTA step size -- only needs computing once, not
+        # on every infer() call. Also sidesteps a segfault: np.linalg.norm's
+        # full SVD (LAPACK gesdd) crashes on some Windows OpenBLAS builds for
+        # short-and-wide D (e.g. atoms4096's (1751, 4096)); svds' Lanczos
+        # iteration avoids gesdd entirely and matches gesdd's sigma_max to
+        # ~1e-8, so the ISTA codes it produces are unchanged.
+        self._step = self._step_size(self.D)
 
     @classmethod
     def from_dir(cls, dirpath: Path) -> "_NumpySparseCoder":
@@ -70,7 +78,9 @@ class _NumpySparseCoder:
         return np.sign(X) * np.maximum(np.abs(X) - tau, 0.0)
 
     def _step_size(self, D: np.ndarray) -> float:
-        spectral_norm = np.linalg.norm(D, ord=2)
+        from scipy.sparse.linalg import svds
+
+        spectral_norm = svds(D, k=1, return_singular_vectors=False)[0]
         L = 2.0 * (spectral_norm**2) + 2.0 * self.lambda2 * (1.0 + self.eta)
         return 1.0 / (1.05 * L)
 
@@ -79,7 +89,7 @@ class _NumpySparseCoder:
         A = embeddings.T.astype(np.float32)
         D = self.D
         Z = np.zeros((D.shape[1], A.shape[1]), dtype=np.float32)
-        t = self._step_size(D)
+        t = self._step
 
         for _ in range(self.ipm_iters * 2):
             grad = -2 * D.T @ (A - D @ Z)
