@@ -183,6 +183,7 @@ export function subscribeToTraining(
   onProgress: (status: JobStatus) => void,
   onComplete: (result: TrainingResult) => void,
   onError: (error: string) => void,
+  onCancelled?: (message: string) => void,
 ): () => void {
   const eventSource = new EventSource(`${TRAINER_BASE}/train/${jobId}/stream`);
 
@@ -194,6 +195,14 @@ export function subscribeToTraining(
   eventSource.addEventListener("complete", (e) => {
     const result: TrainingResult = JSON.parse(e.data);
     onComplete(result);
+    eventSource.close();
+  });
+
+  eventSource.addEventListener("cancelled", (e) => {
+    if (e instanceof MessageEvent && e.data && onCancelled) {
+      const data = JSON.parse(e.data);
+      onCancelled(data.message || "Training cancelled");
+    }
     eventSource.close();
   });
 
@@ -210,6 +219,14 @@ export function subscribeToTraining(
 
   // Return cleanup function
   return () => eventSource.close();
+}
+
+export async function cancelTraining(jobId: string): Promise<void> {
+  const res = await fetch(`${TRAINER_BASE}/train/${jobId}/cancel`, { method: "POST" });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.detail || `Failed to cancel training: ${res.status}`);
+  }
 }
 
 export async function getTrainingResult(jobId: string): Promise<TrainingResult> {

@@ -49,6 +49,7 @@ class TrainingStage(str, Enum):
     SAVING = "SAVING"
     COMPLETED = "COMPLETED"
     FAILED = "FAILED"
+    CANCELLED = "CANCELLED"
 
 
 class JobStatus(BaseModel):

@@ -5,7 +5,7 @@ from uuid import uuid4
 
 from molytica_trainer.server.schemas.training import JobStatus, TrainingResult, TrainingStage
 
-TERMINAL_STAGES = {TrainingStage.COMPLETED, TrainingStage.FAILED}
+TERMINAL_STAGES = {TrainingStage.COMPLETED, TrainingStage.FAILED, TrainingStage.CANCELLED}
 
 
 class JobManager:
@@ -14,6 +14,7 @@ class JobManager:
         self._job: JobStatus | None = None
         self._result: TrainingResult | None = None
         self._known_output_paths: set[str] = set()
+        self._cancel_requested_job_id: str | None = None
 
     def create_job(self, classifier: str) -> str:
         with self._lock:
@@ -32,6 +33,7 @@ class JobManager:
                 updated_at=now,
             )
             self._result = None
+            self._cancel_requested_job_id = None
             return job_id
 
     def get_job(self, job_id: str) -> JobStatus | None:
@@ -63,6 +65,29 @@ class JobManager:
                 return
             self._job.status = TrainingStage.FAILED
             self._job.error = error
+            self._job.updated_at = datetime.now(timezone.utc)
+
+    def request_cancel(self, job_id: str) -> bool:
+        """Marks a running job for cancellation. Returns False if it can't be cancelled
+        (unknown job, or already finished)."""
+        with self._lock:
+            if self._job is None or self._job.job_id != job_id:
+                return False
+            if self._job.status in TERMINAL_STAGES:
+                return False
+            self._cancel_requested_job_id = job_id
+            return True
+
+    def is_cancel_requested(self, job_id: str) -> bool:
+        with self._lock:
+            return self._cancel_requested_job_id == job_id
+
+    def cancel_job(self, job_id: str) -> None:
+        with self._lock:
+            if self._job is None or self._job.job_id != job_id:
+                return
+            self._job.status = TrainingStage.CANCELLED
+            self._job.message = "Training cancelled"
             self._job.updated_at = datetime.now(timezone.utc)
 
     def complete_job(self, job_id: str, result: TrainingResult) -> None:
