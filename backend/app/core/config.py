@@ -59,7 +59,7 @@ class Settings(BaseSettings):
     # whose exported bundle has a different directory name, update this default or
     # set the ARTIFACT_DIR env var to override it.
     ARTIFACT_DIR: str = (
-        "sparsegraphs/artifacts/wl_fddl_gpu_nci_full_atoms32_20260708_202033_20260708_202100"
+        "sparsegraphs/artifacts/wl_fddl_gpu_nci_full_atoms4096_20260719_123451_20260719_142411"
     )
 
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}

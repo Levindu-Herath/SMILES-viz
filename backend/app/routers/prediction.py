@@ -23,10 +23,10 @@ router = APIRouter(prefix="/api/predict", tags=["prediction"])
 
 # Held-out test metrics from the bundle's eval report (sparsegraphs/artifacts/.../eval).
 _MODEL_METRICS = {
-    "Logistic Regression": {"accuracy": 0.7097, "roc_auc": 0.7783},
-    "Gradient Boosting": {"accuracy": 0.7230, "roc_auc": 0.8046},
-    "Linear SVM": {"accuracy": 0.7211, "roc_auc": 0.7989},
-    "Random Forest": {"accuracy": 0.7381, "roc_auc": 0.8087},
+    "Logistic Regression": {"accuracy": 0.9522, "roc_auc": 0.8518},
+    "Gradient Boosting": {"accuracy": 0.9478, "roc_auc": 0.7925},
+    "Linear SVM": {"accuracy": 0.9442, "roc_auc": 0.8510},
+    "Random Forest": {"accuracy": 0.9527, "roc_auc": 0.8546},
 }
 
 
