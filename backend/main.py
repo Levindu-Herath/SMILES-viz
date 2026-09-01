@@ -20,7 +20,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
-from app.routers import dataset, health, molecule, prediction
+from app.routers import dataset, health, model, molecule, prediction
 
 
 def create_app() -> FastAPI:
@@ -43,6 +43,7 @@ def create_app() -> FastAPI:
     app.include_router(molecule.router)
     app.include_router(prediction.router)
     app.include_router(dataset.router)
+    app.include_router(model.router)
 
     return app
 

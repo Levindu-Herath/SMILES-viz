@@ -1,5 +1,6 @@
 import threading
 from datetime import datetime, timezone
+from pathlib import Path
 from uuid import uuid4
 
 from molytica_trainer.server.schemas.training import JobStatus, TrainingResult, TrainingStage
@@ -12,6 +13,7 @@ class JobManager:
         self._lock = threading.Lock()
         self._job: JobStatus | None = None
         self._result: TrainingResult | None = None
+        self._known_output_paths: set[str] = set()
 
     def create_job(self, classifier: str) -> str:
         with self._lock:
@@ -72,6 +74,15 @@ class JobManager:
             self._job.current_stage_progress = 1.0
             self._job.updated_at = datetime.now(timezone.utc)
             self._result = result
+            self._known_output_paths.add(str(Path(result.output_path).resolve()))
+
+    def is_known_output_path(self, path: str) -> bool:
+        with self._lock:
+            try:
+                resolved = str(Path(path).resolve())
+            except OSError:
+                return False
+            return resolved in self._known_output_paths
 
     def get_result(self, job_id: str) -> TrainingResult | None:
         with self._lock:

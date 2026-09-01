@@ -15,6 +15,7 @@ from app.schemas.prediction import (
     PredictionRequest,
     PredictionResponse,
 )
+from app.services import model_service
 from app.services.interpretability_service import compute_prediction_heatmap
 from ml_pipeline.inference import get_predictor
 
@@ -29,14 +30,26 @@ _MODEL_METRICS = {
 }
 
 
+def _resolve_predictor(model_id: str):
+    """"reference" (the default) uses the bundled model; any other id is a
+    published bundle, resolved through the model registry."""
+    if model_id in (None, "reference"):
+        return get_predictor()
+    try:
+        return model_service.get_predictor_for(model_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
+
+
 @router.post("", response_model=PredictionResponse)
 def predict_activity(
     req: PredictionRequest,
     user: Optional[dict] = Depends(get_current_user),
 ):
     """Auth optional."""
+    predictor = _resolve_predictor(req.model_id)
     try:
-        result = get_predictor().predict(req.smiles, req.model_name)
+        result = predictor.predict(req.smiles, req.model_name)
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc))
     return result
@@ -47,7 +60,15 @@ def predict_heatmap(
     req: PredictionRequest,
     user: Optional[dict] = Depends(get_current_user),
 ):
-    """Auth optional. Per-atom importance heatmap explaining a prediction."""
+    """Auth optional. Per-atom importance heatmap explaining a prediction.
+
+    Only available for the reference model — the interpretability pipeline is
+    wired to its specific WL/FDDL artifacts, not to arbitrary published bundles.
+    """
+    if req.model_id not in (None, "reference"):
+        raise HTTPException(
+            status_code=400, detail="Heatmap is only available for the reference model."
+        )
     try:
         result = compute_prediction_heatmap(req.smiles, req.model_name)
     except ValueError as exc:

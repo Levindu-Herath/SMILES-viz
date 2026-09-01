@@ -2,8 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 import { FolderBrowserModal } from "@/components/FolderBrowserModal";
+import { publishModel } from "@/lib/api";
 import {
   checkTrainerHealth,
+  fetchModelArchive,
   getTrainingResult,
   getTrainingStatus,
   startTraining,
@@ -185,6 +187,12 @@ export default function TrainPage() {
   const [result, setResult] = useState<TrainingResult | null>(null);
   const [failureError, setFailureError] = useState("");
 
+  // Publish-to-cloud state
+  const [publishState, setPublishState] = useState<"idle" | "publishing" | "published" | "error">(
+    "idle",
+  );
+  const [publishError, setPublishError] = useState("");
+
   const unsubscribeRef = useRef<(() => void) | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -350,6 +358,22 @@ export default function TrainPage() {
     }
   }
 
+  async function handlePublish() {
+    if (!result || publishState === "publishing") return;
+    setPublishState("publishing");
+    setPublishError("");
+    try {
+      const archive = await fetchModelArchive(result.output_path);
+      const name =
+        CLASSIFIERS.find((c) => c.value === result.classifier)?.label ?? result.classifier;
+      await publishModel(archive, name);
+      setPublishState("published");
+    } catch (err: unknown) {
+      setPublishError(err instanceof Error ? err.message : "Failed to publish model.");
+      setPublishState("error");
+    }
+  }
+
   function resetToForm() {
     cleanupSubscription();
     sessionStorage.removeItem(JOB_ID_STORAGE_KEY);
@@ -359,6 +383,8 @@ export default function TrainPage() {
     setTrainingStartedAt(null);
     setElapsed(0);
     setStartError("");
+    setPublishState("idle");
+    setPublishError("");
 
     // Clear the previously selected dataset so the user picks fresh for the next run.
     setFilePath("");
@@ -831,6 +857,28 @@ export default function TrainPage() {
                 </p>
               </div>
             </div>
+
+            {publishState === "published" ? (
+              <div className="rounded-lg border border-success-border bg-success-bg px-4 py-3 text-sm text-success-text">
+                Published — available under Predict
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {publishState === "error" && (
+                  <div className="rounded-lg border border-danger-border bg-danger-bg px-4 py-3 text-sm text-danger-text">
+                    {publishError}
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={handlePublish}
+                  disabled={publishState === "publishing"}
+                  className="w-full rounded-md border border-primary-300 bg-primary-50 py-2.5 text-sm font-medium text-primary-600 hover:bg-primary-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors duration-150"
+                >
+                  {publishState === "publishing" ? "Publishing…" : "Publish to cloud"}
+                </button>
+              </div>
+            )}
 
             <button
               type="button"

@@ -1,6 +1,7 @@
 import type { MoleculeData } from "@/types/molecule";
 import type { AvailableModelsResponse, HeatmapResult, PredictionResult } from "@/types/prediction";
 import type { DatasetListResponse, DownloadUrlResponse, UploadResponse } from "@/types/dataset";
+import type { ModelListResponse } from "@/types/model";
 import { supabase } from "./supabase";
 
 function getApiBase(): string {
@@ -87,13 +88,14 @@ export async function getAvailableModels(): Promise<AvailableModelsResponse> {
 export async function predictActivity(
   smiles: string,
   modelName: string,
+  modelId: string = "reference",
 ): Promise<PredictionResult> {
   const headers = await getAuthHeaders();
 
   const res = await fetch(`${getApiBase()}/api/predict`, {
     method: "POST",
     headers,
-    body: JSON.stringify({ smiles, model_name: modelName }),
+    body: JSON.stringify({ smiles, model_name: modelName, model_id: modelId }),
   });
 
   if (res.status === 401) {
@@ -111,13 +113,14 @@ export async function predictActivity(
 export async function getPredictionHeatmap(
   smiles: string,
   modelName: string,
+  modelId: string = "reference",
 ): Promise<HeatmapResult> {
   const headers = await getAuthHeaders();
 
   const res = await fetch(`${getApiBase()}/api/predict/heatmap`, {
     method: "POST",
     headers,
-    body: JSON.stringify({ smiles, model_name: modelName }),
+    body: JSON.stringify({ smiles, model_name: modelName, model_id: modelId }),
   });
 
   if (res.status === 401) {
@@ -130,6 +133,54 @@ export async function getPredictionHeatmap(
   }
 
   return res.json();
+}
+
+export async function listMyModels(): Promise<ModelListResponse> {
+  const headers = await getAuthHeaders();
+
+  const res = await fetch(`${getApiBase()}/api/models`, {
+    headers,
+  });
+
+  if (res.status === 401) {
+    throw new ApiError("Sign in required for this feature.", 401);
+  }
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new ApiError(body.detail || `Server error: ${res.status}`, res.status);
+  }
+
+  return res.json();
+}
+
+export async function publishModel(archive: Blob, name: string): Promise<void> {
+  let authHeaders: Record<string, string> = {};
+  try {
+    const token = await getAuthToken();
+    authHeaders = { Authorization: `Bearer ${token}` };
+  } catch {
+    // No session — the request will 401, surfaced below like any other call.
+  }
+
+  const formData = new FormData();
+  formData.append("file", archive, `${name}.tar.gz`);
+  formData.append("name", name);
+
+  const res = await fetch(`${getApiBase()}/api/models`, {
+    method: "POST",
+    headers: authHeaders,
+    body: formData,
+  });
+
+  if (res.status === 401) {
+    throw new ApiError("Sign in required for this feature.", 401);
+  }
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new ApiError(body.detail || `Server error: ${res.status}`, res.status);
+  }
 }
 
 export async function uploadDataset(
