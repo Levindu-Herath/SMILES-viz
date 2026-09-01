@@ -133,10 +133,9 @@ export function MoleculePredict({
   const [predictMoleculeData, setPredictMoleculeData] = useState<MoleculeData | null>(null);
   const [heatmapResult, setHeatmapResult] = useState<HeatmapResult | null>(null);
   const [heatmapError, setHeatmapError] = useState("");
-  const [scoreAInfoOpen, setScoreAInfoOpen] = useState(false);
-  const [scoreADataOpen, setScoreADataOpen] = useState(false);
-  const [scoreBInfoOpen, setScoreBInfoOpen] = useState(false);
-  const [scoreBDataOpen, setScoreBDataOpen] = useState(false);
+  // Within a single heatmap, only one of "info" / "data" can be expanded at a time.
+  const [scoreAPanel, setScoreAPanel] = useState<"info" | "data" | null>(null);
+  const [scoreBPanel, setScoreBPanel] = useState<"info" | "data" | null>(null);
 
   // Turns whatever the user typed into a SMILES string, transparently resolving
   // compound/drug names through PubChem first. Returns null (with `error` already
@@ -511,21 +510,21 @@ export function MoleculePredict({
                     <div className="flex items-center gap-1.5">
                       <ToggleIconButton
                         label="What does this show?"
-                        active={scoreAInfoOpen}
-                        onClick={() => setScoreAInfoOpen((v) => !v)}
+                        active={scoreAPanel === "info"}
+                        onClick={() => setScoreAPanel((v) => (v === "info" ? null : "info"))}
                       >
                         <InfoIcon />
                       </ToggleIconButton>
                       <ToggleIconButton
                         label="View underlying data"
-                        active={scoreADataOpen}
-                        onClick={() => setScoreADataOpen((v) => !v)}
+                        active={scoreAPanel === "data"}
+                        onClick={() => setScoreAPanel((v) => (v === "data" ? null : "data"))}
                       >
                         <DataIcon />
                       </ToggleIconButton>
                     </div>
 
-                    {scoreAInfoOpen && (
+                    {scoreAPanel === "info" && (
                       <p className="text-xs text-text-secondary bg-surface-bg rounded-md p-2.5">
                         Score A multiplies each atom&apos;s raw contribution by its weight in the
                         trained sparse dictionary. It highlights atoms whose learned features drove
@@ -533,7 +532,7 @@ export function MoleculePredict({
                       </p>
                     )}
 
-                    {scoreADataOpen && (
+                    {scoreAPanel === "data" && (
                       <div className="space-y-1">
                         {heatmapResult.top_substructures_a.slice(0, 5).map((sub, i) => (
                           <div key={`${sub.token}-${i}`} className="flex items-center justify-between gap-2 text-xs">
@@ -569,21 +568,21 @@ export function MoleculePredict({
                     <div className="flex items-center gap-1.5">
                       <ToggleIconButton
                         label="What does this show?"
-                        active={scoreBInfoOpen}
-                        onClick={() => setScoreBInfoOpen((v) => !v)}
+                        active={scoreBPanel === "info"}
+                        onClick={() => setScoreBPanel((v) => (v === "info" ? null : "info"))}
                       >
                         <InfoIcon />
                       </ToggleIconButton>
                       <ToggleIconButton
                         label="View underlying data"
-                        active={scoreBDataOpen}
-                        onClick={() => setScoreBDataOpen((v) => !v)}
+                        active={scoreBPanel === "data"}
+                        onClick={() => setScoreBPanel((v) => (v === "data" ? null : "data"))}
                       >
                         <DataIcon />
                       </ToggleIconButton>
                     </div>
 
-                    {scoreBInfoOpen && (
+                    {scoreBPanel === "info" && (
                       <p className="text-xs text-text-secondary bg-surface-bg rounded-md p-2.5">
                         Score B refines Score A by scaling it with how often that atom&apos;s
                         structural pattern (WL feature) recurs in the molecule. It highlights atoms
@@ -592,7 +591,7 @@ export function MoleculePredict({
                       </p>
                     )}
 
-                    {scoreBDataOpen && (
+                    {scoreBPanel === "data" && (
                       <div className="space-y-1">
                         {heatmapResult.top_substructures_b.slice(0, 5).map((sub, i) => (
                           <div key={`${sub.token}-${i}`} className="flex items-center justify-between gap-2 text-xs">
