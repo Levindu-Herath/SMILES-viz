@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { PropRow } from "@/components/ui/PropRow";
 import { ApiError, getPredictionHeatmap, predictActivity, visualizeMolecule } from "@/lib/api";
 import { EXAMPLE_COMPOUNDS, looksLikeSmiles, resolveCompoundName } from "@/lib/smiles";
@@ -46,6 +46,73 @@ function ActivityIcon() {
   );
 }
 
+function InfoIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="h-3.5 w-3.5"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 11v5" />
+      <path d="M12 8h.01" />
+    </svg>
+  );
+}
+
+function DataIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="h-3.5 w-3.5"
+      aria-hidden="true"
+    >
+      <path d="M4 6h16" />
+      <path d="M4 12h16" />
+      <path d="M4 18h10" />
+    </svg>
+  );
+}
+
+function ToggleIconButton({
+  label,
+  active,
+  onClick,
+  children,
+}: {
+  label: string;
+  active: boolean;
+  onClick: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title={label}
+      aria-label={label}
+      aria-pressed={active}
+      className={`inline-flex items-center justify-center h-6 w-6 rounded-md border transition-colors duration-150 ${
+        active
+          ? "border-primary-500 bg-primary-50 text-primary-600"
+          : "border-surface-border text-text-muted hover:text-text-primary hover:border-text-muted"
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
 export function MoleculePredict({
   modelId,
   models,
@@ -66,6 +133,10 @@ export function MoleculePredict({
   const [predictMoleculeData, setPredictMoleculeData] = useState<MoleculeData | null>(null);
   const [heatmapResult, setHeatmapResult] = useState<HeatmapResult | null>(null);
   const [heatmapError, setHeatmapError] = useState("");
+  const [scoreAInfoOpen, setScoreAInfoOpen] = useState(false);
+  const [scoreADataOpen, setScoreADataOpen] = useState(false);
+  const [scoreBInfoOpen, setScoreBInfoOpen] = useState(false);
+  const [scoreBDataOpen, setScoreBDataOpen] = useState(false);
 
   // Turns whatever the user typed into a SMILES string, transparently resolving
   // compound/drug names through PubChem first. Returns null (with `error` already
@@ -436,24 +507,52 @@ export function MoleculePredict({
                         className="max-w-full h-auto"
                       />
                     </div>
-                    <div className="space-y-1">
-                      {heatmapResult.top_substructures_a.slice(0, 5).map((sub, i) => (
-                        <div key={`${sub.token}-${i}`} className="flex items-center justify-between gap-2 text-xs">
-                          <span className="flex items-center gap-1.5 text-text-secondary min-w-0">
-                            <span
-                              className={`h-2 w-2 rounded-full shrink-0 ${
-                                sub.direction === "supporting" ? "bg-danger-text" : "bg-primary-500"
-                              }`}
-                            />
-                            <span className="truncate" title={sub.description}>
-                              {sub.description}
-                            </span>
-                            <span className="text-text-muted shrink-0">×{sub.occurrences}</span>
-                          </span>
-                          <span className="text-text-primary font-mono shrink-0">{sub.percentage.toFixed(1)}%</span>
-                        </div>
-                      ))}
+
+                    <div className="flex items-center gap-1.5">
+                      <ToggleIconButton
+                        label="What does this show?"
+                        active={scoreAInfoOpen}
+                        onClick={() => setScoreAInfoOpen((v) => !v)}
+                      >
+                        <InfoIcon />
+                      </ToggleIconButton>
+                      <ToggleIconButton
+                        label="View underlying data"
+                        active={scoreADataOpen}
+                        onClick={() => setScoreADataOpen((v) => !v)}
+                      >
+                        <DataIcon />
+                      </ToggleIconButton>
                     </div>
+
+                    {scoreAInfoOpen && (
+                      <p className="text-xs text-text-secondary bg-surface-bg rounded-md p-2.5">
+                        Score A multiplies each atom&apos;s raw contribution by its weight in the
+                        trained sparse dictionary. It highlights atoms whose learned features drove
+                        the prediction most strongly, on their own.
+                      </p>
+                    )}
+
+                    {scoreADataOpen && (
+                      <div className="space-y-1">
+                        {heatmapResult.top_substructures_a.slice(0, 5).map((sub, i) => (
+                          <div key={`${sub.token}-${i}`} className="flex items-center justify-between gap-2 text-xs">
+                            <span className="flex items-center gap-1.5 text-text-secondary min-w-0">
+                              <span
+                                className={`h-2 w-2 rounded-full shrink-0 ${
+                                  sub.direction === "supporting" ? "bg-danger-text" : "bg-primary-500"
+                                }`}
+                              />
+                              <span className="truncate" title={sub.description}>
+                                {sub.description}
+                              </span>
+                              <span className="text-text-muted shrink-0">×{sub.occurrences}</span>
+                            </span>
+                            <span className="text-text-primary font-mono shrink-0">{sub.percentage.toFixed(1)}%</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
                   {/* Score B: Score A x wl_feature_count */}
@@ -466,24 +565,53 @@ export function MoleculePredict({
                         className="max-w-full h-auto"
                       />
                     </div>
-                    <div className="space-y-1">
-                      {heatmapResult.top_substructures_b.slice(0, 5).map((sub, i) => (
-                        <div key={`${sub.token}-${i}`} className="flex items-center justify-between gap-2 text-xs">
-                          <span className="flex items-center gap-1.5 text-text-secondary min-w-0">
-                            <span
-                              className={`h-2 w-2 rounded-full shrink-0 ${
-                                sub.direction === "supporting" ? "bg-danger-text" : "bg-primary-500"
-                              }`}
-                            />
-                            <span className="truncate" title={sub.description}>
-                              {sub.description}
-                            </span>
-                            <span className="text-text-muted shrink-0">×{sub.occurrences}</span>
-                          </span>
-                          <span className="text-text-primary font-mono shrink-0">{sub.percentage.toFixed(1)}%</span>
-                        </div>
-                      ))}
+
+                    <div className="flex items-center gap-1.5">
+                      <ToggleIconButton
+                        label="What does this show?"
+                        active={scoreBInfoOpen}
+                        onClick={() => setScoreBInfoOpen((v) => !v)}
+                      >
+                        <InfoIcon />
+                      </ToggleIconButton>
+                      <ToggleIconButton
+                        label="View underlying data"
+                        active={scoreBDataOpen}
+                        onClick={() => setScoreBDataOpen((v) => !v)}
+                      >
+                        <DataIcon />
+                      </ToggleIconButton>
                     </div>
+
+                    {scoreBInfoOpen && (
+                      <p className="text-xs text-text-secondary bg-surface-bg rounded-md p-2.5">
+                        Score B refines Score A by scaling it with how often that atom&apos;s
+                        structural pattern (WL feature) recurs in the molecule. It highlights atoms
+                        whose influence is reinforced by a repeated structural motif, not just an
+                        isolated one.
+                      </p>
+                    )}
+
+                    {scoreBDataOpen && (
+                      <div className="space-y-1">
+                        {heatmapResult.top_substructures_b.slice(0, 5).map((sub, i) => (
+                          <div key={`${sub.token}-${i}`} className="flex items-center justify-between gap-2 text-xs">
+                            <span className="flex items-center gap-1.5 text-text-secondary min-w-0">
+                              <span
+                                className={`h-2 w-2 rounded-full shrink-0 ${
+                                  sub.direction === "supporting" ? "bg-danger-text" : "bg-primary-500"
+                                }`}
+                              />
+                              <span className="truncate" title={sub.description}>
+                                {sub.description}
+                              </span>
+                              <span className="text-text-muted shrink-0">×{sub.occurrences}</span>
+                            </span>
+                            <span className="text-text-primary font-mono shrink-0">{sub.percentage.toFixed(1)}%</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               ) : (
