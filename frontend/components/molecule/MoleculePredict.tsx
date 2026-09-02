@@ -15,8 +15,9 @@ type ResolvedCompound = { name: string; smiles: string; cid: number };
 
 interface MoleculePredictProps {
   modelId: string; // "reference" for Analyze, bundle.id for Predict
-  models: ModelInfo[]; // classifier list to show in the selector
+  models?: ModelInfo[]; // classifier list for the selector (Predict tab only)
   defaultModel?: string;
+  fixedModel?: string; // when set: hide the selector, run this model on Predict
   enableHeatmap?: boolean; // true only in Analyze
   showMoleculePreview?: boolean; // Analyze shows the 2D structure; Predict optional
 }
@@ -116,8 +117,9 @@ function ToggleIconButton({
 
 export function MoleculePredict({
   modelId,
-  models,
+  models = [],
   defaultModel,
+  fixedModel,
   enableHeatmap = false,
   showMoleculePreview = false,
 }: MoleculePredictProps) {
@@ -129,7 +131,7 @@ export function MoleculePredict({
   const [resolvingTerm, setResolvingTerm] = useState("");
   const [resolvedInfo, setResolvedInfo] = useState<ResolvedCompound | null>(null);
 
-  const [selectedModel, setSelectedModel] = useState(defaultModel ?? "");
+  const [selectedModel, setSelectedModel] = useState(fixedModel ?? defaultModel ?? "");
   const [predictionResult, setPredictionResult] = useState<PredictionResult | null>(null);
   const [predictMoleculeData, setPredictMoleculeData] = useState<MoleculeData | null>(null);
   const [heatmapResult, setHeatmapResult] = useState<HeatmapResult | null>(null);
@@ -225,7 +227,8 @@ export function MoleculePredict({
   }
 
   function handleSubmit() {
-    if (selectedModel) runPrediction(selectedModel);
+    const model = fixedModel ?? selectedModel;
+    if (model) runPrediction(model);
   }
 
   function handleClearSmiles() {
@@ -235,7 +238,7 @@ export function MoleculePredict({
     setPredictMoleculeData(null);
     setHeatmapResult(null);
     setHeatmapError("");
-    setSelectedModel("");
+    setSelectedModel(fixedModel ?? "");
     setResolvedInfo(null);
   }
 
@@ -251,7 +254,7 @@ export function MoleculePredict({
     setPredictMoleculeData(null);
     setHeatmapResult(null);
     setHeatmapError("");
-    setSelectedModel("");
+    setSelectedModel(fixedModel ?? "");
     setResolvedInfo(null);
   }
 
@@ -276,68 +279,83 @@ export function MoleculePredict({
         resolving={resolving}
         resolvingTerm={resolvingTerm}
         resolved={resolvedInfo}
+        submitSlot={
+          fixedModel ? (
+            <button
+              type="button"
+              onClick={handleSubmit}
+              disabled={loading || resolving || !smiles.trim()}
+              className="shrink-0 inline-flex items-center gap-2 rounded-md bg-primary-500 px-8 py-3 text-sm font-semibold text-white hover:bg-primary-600 active:bg-primary-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors duration-150"
+            >
+              <ActivityIcon />
+              {resolving ? "Looking up…" : loading ? "Predicting…" : "Predict"}
+            </button>
+          ) : undefined
+        }
       />
 
       {/* Classifier selector — clicking a model runs the prediction */}
-      <div className="space-y-2">
-        <h2 className="flex items-center gap-1.5 text-[11px] uppercase tracking-wider text-primary-500 font-medium">
-          <ActivityIcon />
-          Choose a model
-        </h2>
-        {models.length === 0 && <p className="text-sm text-text-muted">Loading models…</p>}
-        {models.length > 0 && (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
-            {models.map((model) => {
-              const isEmpty = !smiles.trim();
-              const disabled = isEmpty || loading || resolving;
-              const isSelected = selectedModel === model.name && !isEmpty;
-              return (
-                <div
-                  key={model.name}
-                  role="button"
-                  tabIndex={disabled ? -1 : 0}
-                  onClick={() => runPrediction(model.name)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault();
-                      runPrediction(model.name);
-                    }
-                  }}
-                  className={`rounded-lg border py-2.5 px-3 transition-all duration-150 ${
-                    isSelected
-                      ? "border-primary-300 bg-primary-50 ring-1 ring-primary-200"
-                      : "border-surface-border bg-surface-card hover:border-primary-200 hover:bg-primary-50/50"
-                  } ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2 min-w-0">
+      {!fixedModel && (
+        <div className="space-y-2">
+          <h2 className="flex items-center gap-1.5 text-[11px] uppercase tracking-wider text-primary-500 font-medium">
+            <ActivityIcon />
+            Choose a model
+          </h2>
+          {models.length === 0 && <p className="text-sm text-text-muted">Loading models…</p>}
+          {models.length > 0 && (
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+              {models.map((model) => {
+                const isEmpty = !smiles.trim();
+                const disabled = isEmpty || loading || resolving;
+                const isSelected = selectedModel === model.name && !isEmpty;
+                return (
+                  <div
+                    key={model.name}
+                    role="button"
+                    tabIndex={disabled ? -1 : 0}
+                    onClick={() => runPrediction(model.name)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        runPrediction(model.name);
+                      }
+                    }}
+                    className={`rounded-lg border py-2.5 px-3 transition-all duration-150 ${
+                      isSelected
+                        ? "border-primary-300 bg-primary-50 ring-1 ring-primary-200"
+                        : "border-surface-border bg-surface-card hover:border-primary-200 hover:bg-primary-50/50"
+                    } ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span
+                          className={`h-2.5 w-2.5 rounded-full border shrink-0 ${
+                            isSelected ? "border-primary-500 bg-primary-500" : "border-surface-border"
+                          }`}
+                        />
+                        <span className="text-xs font-medium text-text-primary truncate">
+                          {loading && isSelected ? "Predicting…" : model.name}
+                        </span>
+                      </div>
                       <span
-                        className={`h-2.5 w-2.5 rounded-full border shrink-0 ${
-                          isSelected ? "border-primary-500 bg-primary-500" : "border-surface-border"
-                        }`}
-                      />
-                      <span className="text-xs font-medium text-text-primary truncate">
-                        {loading && isSelected ? "Predicting…" : model.name}
+                        className="flex flex-col items-end shrink-0"
+                        title="ROC-AUC — higher is better"
+                      >
+                        <span className="text-[9px] uppercase tracking-wide text-text-muted">
+                          ROC-AUC
+                        </span>
+                        <span className="text-[10px] text-text-secondary font-mono">
+                          {model.roc_auc.toFixed(3)}
+                        </span>
                       </span>
                     </div>
-                    <span
-                      className="flex flex-col items-end shrink-0"
-                      title="ROC-AUC — higher is better"
-                    >
-                      <span className="text-[9px] uppercase tracking-wide text-text-muted">
-                        ROC-AUC
-                      </span>
-                      <span className="text-[10px] text-text-secondary font-mono">
-                        {model.roc_auc.toFixed(3)}
-                      </span>
-                    </span>
                   </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
 
       {error && (
         <div className="rounded-lg border border-danger-border bg-danger-bg px-5 py-4 text-sm text-danger-text">
