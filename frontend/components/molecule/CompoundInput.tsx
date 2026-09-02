@@ -63,7 +63,7 @@ export function CompoundInput({
               if (e.key === "Enter") onSubmit();
             }}
             placeholder="Enter a compound name or SMILES — e.g. aspirin, caffeine, CC(=O)O"
-            className="w-full rounded-md border border-surface-border bg-surface-card text-text-primary pl-4 pr-10 py-3.5 text-base font-mono placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary-300 focus:ring-offset-2 focus:border-primary-500 transition-colors duration-150"
+            className="w-full rounded-md border border-surface-border bg-surface-card text-text-primary pl-4 pr-10 py-3.5 text-base font-mono placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary-300 focus:border-primary-500 transition-colors duration-150"
             spellCheck={false}
             autoComplete="off"
           />

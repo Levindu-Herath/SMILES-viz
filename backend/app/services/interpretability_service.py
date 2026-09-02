@@ -26,6 +26,7 @@ from typing import Optional
 
 import networkx as nx
 
+from app.core.config import settings
 from interpretability.wl_aksvd_interpreter import WLAKSVDInterpreter
 from ml_pipeline.inference import get_predictor
 
@@ -37,25 +38,26 @@ from ml_pipeline.inference import get_predictor
 
 _LABEL_MAP = {-1: "Inactive", 1: "Active"}
 
-_interpreters: dict[str, WLAKSVDInterpreter] = {}
+_interpreters: dict[tuple[str, str], WLAKSVDInterpreter] = {}
 _lock = threading.Lock()
 
 
-def _get_interpreter(model_name: str) -> WLAKSVDInterpreter:
-    """One interpreter per model (classifier coefficients differ per model),
-    built lazily and cached -- same lifetime as the predictor singleton."""
-    if model_name not in _interpreters:
+def _get_interpreter(disease_id: str, model_name: str) -> WLAKSVDInterpreter:
+    """One interpreter per (disease, classifier) — encoder, dictionary, and
+    classifier coefficients all differ per disease. Cached lazily."""
+    key = (disease_id, model_name)
+    if key not in _interpreters:
         with _lock:
-            if model_name not in _interpreters:
-                predictor = get_predictor()
-                _interpreters[model_name] = WLAKSVDInterpreter(
+            if key not in _interpreters:
+                predictor = get_predictor(disease_id)
+                _interpreters[key] = WLAKSVDInterpreter(
                     wl=predictor.encoder,
                     aksvd=predictor.dict_learner,
                     classifier=predictor.model_for(model_name),
                     scaler=predictor.scaler,
                     label_map=_LABEL_MAP,
                 )
-    return _interpreters[model_name]
+    return _interpreters[key]
 
 
 # ---------------------------------------------------------------------------
@@ -302,6 +304,7 @@ def _top_substructures(sorted_tokens: list, token_colours: dict, token_desc: dic
 def compute_prediction_heatmap(
     smiles: str,
     model_name: Optional[str] = None,
+    disease_id: Optional[str] = None,
     top_k_atoms: int = 5,
     top_n_substructures: int = 5,
     width: int = 450,
@@ -315,9 +318,10 @@ def compute_prediction_heatmap(
     from rdkit import Chem
     from rdkit.Chem import AllChem
 
-    predictor = get_predictor()
+    disease_id = disease_id or settings.default_disease_id
+    predictor = get_predictor(disease_id)
     model_name = model_name or predictor.default_model
-    interpreter = _get_interpreter(model_name)
+    interpreter = _get_interpreter(disease_id, model_name)
 
     graph = predictor.graph_for(smiles)
     importance = interpreter.get_node_importance(graph, top_k_atoms=top_k_atoms)

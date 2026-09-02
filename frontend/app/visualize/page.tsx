@@ -5,10 +5,11 @@ import { AuthGuard } from "@/components/auth/AuthGuard";
 import { CompoundInput } from "@/components/molecule/CompoundInput";
 import { MoleculePredict } from "@/components/molecule/MoleculePredict";
 import { MoleculeResults } from "@/components/molecule/MoleculeResults";
-import { ApiError, getAvailableModels, visualizeMolecule } from "@/lib/api";
+import { REFERENCE_PREDICT_MODEL } from "@/constants/models";
+import { ApiError, getAvailableDiseases, visualizeMolecule } from "@/lib/api";
 import { EXAMPLE_COMPOUNDS, looksLikeSmiles, resolveCompoundName } from "@/lib/smiles";
 import type { MoleculeData } from "@/types/molecule";
-import type { ModelInfo } from "@/types/prediction";
+import type { DiseaseInfo } from "@/types/prediction";
 
 type Mode = "visualize" | "predict";
 
@@ -56,18 +57,17 @@ function AnalysisPage() {
   // Visualize-mode results
   const [visualizeResult, setVisualizeResult] = useState<MoleculeData | null>(null);
 
-  // Predict-mode models list (fetched here, handed down to MoleculePredict)
-  const [models, setModels] = useState<ModelInfo[]>([]);
-  const [modelsError, setModelsError] = useState("");
+  // Predict-mode cancer-type list (fetched here, handed down to MoleculePredict)
+  const [diseases, setDiseases] = useState<DiseaseInfo[]>([]);
+  const [defaultDisease, setDefaultDisease] = useState("");
 
   useEffect(() => {
-    getAvailableModels()
-      .then((data) => {
-        setModels(data.models);
+    getAvailableDiseases()
+      .then((res) => {
+        setDiseases(res.diseases);
+        setDefaultDisease(res.default_disease);
       })
-      .catch((err: unknown) => {
-        setModelsError(friendlyErrorMessage(err, "Failed to load available models."));
-      });
+      .catch(() => {});
   }, []);
 
   function handleModeChange(newMode: Mode) {
@@ -181,7 +181,7 @@ function AnalysisPage() {
           <p className="text-sm text-text-secondary mt-2">
             {mode === "visualize"
               ? "View molecular structure, druglikeness, and absorption properties."
-              : "Predict anti-cancer activity using an AI model trained on NCI compound data."}
+              : "Choose a cancer type, then predict whether a molecule is active against it."}
           </p>
         </div>
 
@@ -232,19 +232,14 @@ function AnalysisPage() {
             )}
           </>
         ) : (
-          <>
-            {modelsError && (
-              <div className="rounded-lg border border-danger-border bg-danger-bg px-4 py-3 text-sm text-danger-text">
-                {modelsError}
-              </div>
-            )}
-            <MoleculePredict
-              modelId="reference"
-              models={models}
-              enableHeatmap
-              showMoleculePreview
-            />
-          </>
+          <MoleculePredict
+            modelId="reference"
+            fixedModel={REFERENCE_PREDICT_MODEL}
+            diseases={diseases}
+            defaultDisease={defaultDisease}
+            enableHeatmap
+            showMoleculePreview
+          />
         )}
       </div>
     </main>
