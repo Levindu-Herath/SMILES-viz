@@ -275,8 +275,8 @@ export function MoleculePredict({
     setResolvedInfo(null);
   }
 
-  function handleSelectExample(exampleName: string) {
-    setSmiles(exampleName);
+  function handleSelectExample(exampleSmiles: string) {
+    setSmiles(exampleSmiles);
     setError("");
     setPredictionResult(null);
     setPredictMoleculeData(null);

@@ -1,15 +1,37 @@
 // Compound-name/SMILES resolution helpers, shared by every predict surface
 // (Analyze -> Predict and the standalone Predict page).
 
-// Common drug/compound names general users would recognize -- resolved to SMILES via
-// PubChem on submit, rather than requiring users to already know the SMILES notation.
-export const EXAMPLE_COMPOUNDS = [
-  "Aspirin",
-  "Caffeine",
-  "Ibuprofen",
-  "Paracetamol",
-  "Penicillin",
-  "Glucose",
+export interface ExampleMolecule {
+  label: string;
+  smiles: string;
+}
+
+// Curated "Try:" examples. Each carries its own canonical SMILES so selecting one
+// loads it directly (see looksLikeSmiles in resolveSmiles) instead of round-tripping
+// through a PubChem name lookup -- important for the less common names below, where
+// PubChem's name resolution can be unreliable.
+export const EXAMPLE_COMPOUNDS: readonly ExampleMolecule[] = [
+  { label: "Aspirin", smiles: "CC(=O)Oc1ccccc1C(=O)O" },
+  { label: "Paracetamol", smiles: "CC(=O)Nc1ccc(O)cc1" },
+  {
+    label: "Ritterazine A",
+    smiles:
+      "CC1C2C(C=C3C4CCC5Cc6nc7c(nc6CC5(C)C4CC(O)C32CO)CC2CCC3C4=CC5OC6(OC(C)(CO)CC6O)C(C)C5(O)C4(C)C(O)CC3C2(C)C7)OC12CCC(C)(C)O2",
+  },
+  {
+    label: "Pactamycin",
+    smiles: "CC(=O)c1cccc(NC2C(N)C(NC(=O)N(C)C)(C(C)O)C(C)(O)C2(O)COC(=O)c2c(C)cccc2O)c1",
+  },
+  {
+    label: "Valinomycin",
+    smiles:
+      "CC1OC(=O)C(C(C)C)NC(=O)C(C(C)C)OC(=O)C(C(C)C)NC(=O)C(C)OC(=O)C(C(C)C)NC(=O)C(C(C)C)OC(=O)C(C(C)C)NC(=O)C(C)OC(=O)C(C(C)C)NC(=O)C(C(C)C)OC(=O)C(C(C)C)NC1=O",
+  },
+  {
+    label: "Leucinostatin A",
+    smiles:
+      "CCC(=O)CC(O)CC(C)CC(NC(=O)C1CC(C)CN1C(=O)C=CC(C)CC)C(=O)NC(C(=O)NC(C)(C)C(=O)NC(CC(C)C)C(=O)NC(CC(C)C)C(=O)NC(C)(C)C(=O)NC(C)(C)C(=O)NCCC(=O)NC(C)CN(C)C)C(O)C(C)C",
+  },
 ] as const;
 
 // Heuristic only -- ambiguous input falls through to a PubChem lookup, and if that

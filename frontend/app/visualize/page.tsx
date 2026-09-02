@@ -73,6 +73,7 @@ function AnalysisPage() {
   function handleModeChange(newMode: Mode) {
     if (newMode === mode) return;
     setMode(newMode);
+    setSmiles("");
     setError("");
     setVisualizeResult(null);
     setResolvedInfo(null);
@@ -135,8 +136,8 @@ function AnalysisPage() {
     setResolvedInfo(null);
   }
 
-  function handleSelectExample(exampleName: string) {
-    setSmiles(exampleName);
+  function handleSelectExample(exampleSmiles: string) {
+    setSmiles(exampleSmiles);
     setError("");
     setVisualizeResult(null);
     setResolvedInfo(null);

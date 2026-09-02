@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import type { ExampleMolecule } from "@/lib/smiles";
 
 type ResolvedCompound = { name: string; smiles: string; cid: number };
 
@@ -9,8 +10,8 @@ interface CompoundInputProps {
   onChange: (value: string) => void;
   onSubmit: () => void;
   onClear: () => void;
-  onSelectExample: (name: string) => void;
-  examples: readonly string[];
+  onSelectExample: (smiles: string) => void;
+  examples: readonly ExampleMolecule[];
   resolving: boolean;
   resolvingTerm: string;
   resolved: ResolvedCompound | null;
@@ -119,14 +120,14 @@ export function CompoundInput({
 
       <div className="flex flex-wrap items-center gap-2">
         <span className="text-xs text-text-muted mr-1">Try:</span>
-        {examples.map((name) => (
+        {examples.map((example) => (
           <button
-            key={name}
+            key={example.label}
             type="button"
-            onClick={() => onSelectExample(name)}
+            onClick={() => onSelectExample(example.smiles)}
             className="rounded-full border border-surface-border bg-surface-card px-3 py-1 text-xs text-text-secondary hover:border-primary-300 hover:bg-primary-50 hover:text-primary-500 transition-colors duration-150"
           >
-            {name}
+            {example.label}
           </button>
         ))}
         <span className="text-xs text-text-muted ml-auto">
