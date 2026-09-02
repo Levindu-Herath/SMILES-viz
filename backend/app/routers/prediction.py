@@ -8,8 +8,11 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException
 
 from app.core.auth import get_current_user
+from app.core.config import settings
 from app.schemas.prediction import (
+    AvailableDiseasesResponse,
     AvailableModelsResponse,
+    DiseaseInfo,
     HeatmapResponse,
     ModelInfo,
     PredictionRequest,
@@ -22,6 +25,8 @@ from ml_pipeline.inference import get_predictor
 router = APIRouter(prefix="/api/predict", tags=["prediction"])
 
 # Held-out test metrics from the bundle's eval report (sparsegraphs/artifacts/.../eval).
+# Reflects the default disease's bundle only — nothing calls GET /api/predict/models
+# since the Analyze tab's model chooser was removed.
 _MODEL_METRICS = {
     "Logistic Regression": {"accuracy": 0.9522, "roc_auc": 0.8518},
     "Gradient Boosting": {"accuracy": 0.9478, "roc_auc": 0.7925},
@@ -30,11 +35,14 @@ _MODEL_METRICS = {
 }
 
 
-def _resolve_predictor(model_id: str):
-    """"reference" (the default) uses the bundled model; any other id is a
-    published bundle, resolved through the model registry."""
+def _resolve_predictor(model_id: str, disease_id: Optional[str] = None):
+    """"reference" uses a built-in per-disease bundle; any other id is a
+    published bundle (disease-agnostic)."""
     if model_id in (None, "reference"):
-        return get_predictor()
+        try:
+            return get_predictor(disease_id)
+        except ValueError as exc:
+            raise HTTPException(status_code=404, detail=str(exc))
     try:
         return model_service.get_predictor_for(model_id)
     except ValueError as exc:
@@ -47,7 +55,7 @@ def predict_activity(
     user: Optional[dict] = Depends(get_current_user),
 ):
     """Auth optional."""
-    predictor = _resolve_predictor(req.model_id)
+    predictor = _resolve_predictor(req.model_id, req.disease)
     try:
         result = predictor.predict(req.smiles, req.model_name)
     except ValueError as exc:
@@ -70,10 +78,22 @@ def predict_heatmap(
             status_code=400, detail="Heatmap is only available for the reference model."
         )
     try:
-        result = compute_prediction_heatmap(req.smiles, req.model_name)
+        result = compute_prediction_heatmap(req.smiles, req.model_name, req.disease)
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc))
     return result
+
+
+@router.get("/diseases", response_model=AvailableDiseasesResponse)
+def list_diseases(user: Optional[dict] = Depends(get_current_user)):
+    """Auth optional. Reference cancer types the Analyze tab can predict against."""
+    return AvailableDiseasesResponse(
+        diseases=[
+            DiseaseInfo(id=d.id, label=d.label, nci_id=d.nci_id)
+            for d in settings.reference_diseases()
+        ],
+        default_disease=settings.default_disease_id,
+    )
 
 
 @router.get("/models", response_model=AvailableModelsResponse)

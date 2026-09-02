@@ -11,6 +11,7 @@ class PredictionRequest(BaseModel):
     smiles: str
     model_name: str = "Logistic Regression"
     model_id: str = "reference"
+    disease: Optional[str] = None  # reference model only; None -> default disease
 
 
 class PredictionResponse(BaseModel):
@@ -32,6 +33,17 @@ class ModelInfo(BaseModel):
 class AvailableModelsResponse(BaseModel):
     models: list[ModelInfo]
     default_model: str
+
+
+class DiseaseInfo(BaseModel):
+    id: str
+    label: str
+    nci_id: int
+
+
+class AvailableDiseasesResponse(BaseModel):
+    diseases: list[DiseaseInfo]
+    default_disease: str
 
 
 class TopSubstructure(BaseModel):

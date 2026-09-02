@@ -4,6 +4,7 @@ Reads from environment variables with sensible defaults.
 """
 
 import json
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Annotated
 
@@ -12,6 +13,35 @@ from pydantic_settings import BaseSettings, NoDecode
 
 # backend/app/core/config.py -> backend/
 BACKEND_DIR = Path(__file__).resolve().parents[2]
+
+
+@dataclass(frozen=True)
+class ReferenceDisease:
+    id: str            # stable slug used across the API and UI
+    label: str         # public-facing cancer-type name shown to users
+    nci_id: int        # NCI assay id (provenance shown as a small sublabel)
+    artifact_dir: str  # bundle path relative to backend/ (or absolute)
+
+
+# Single source of truth for the built-in reference predictors. To add a cancer
+# type, append one entry whose bundle exists in the pinned sparsegraphs commit.
+# (Melanoma / NCI-33 is intentionally omitted — its CS-FDDL bundle needs a loader
+# change; see the project notes.)
+REFERENCE_DISEASES: tuple[ReferenceDisease, ...] = (
+    ReferenceDisease(
+        id="lung",
+        label="Lung cancer",
+        nci_id=1,
+        artifact_dir="sparsegraphs/artifacts/wl_fddl_gpu_nci_full_atoms4096_20260719_123451_20260719_142411",
+    ),
+    ReferenceDisease(
+        id="prostate",
+        label="Prostate cancer",
+        nci_id=41,
+        artifact_dir="sparsegraphs/artifacts/wl_fddl_gpu_nci_full_id41_atoms4096_20260902_025157_20260902_025843",
+    ),
+)
+DEFAULT_DISEASE_ID = "lung"
 
 
 class Settings(BaseSettings):
@@ -53,22 +83,33 @@ class Settings(BaseSettings):
     SUPABASE_JWT_SECRET: str = ""
     SUPABASE_SERVICE_ROLE_KEY: str = ""
 
-    # ML prediction pipeline
-    # Default path names a specific trained bundle inside the pinned `sparsegraphs`
-    # submodule commit (see .gitmodules). If the submodule is advanced to a commit
-    # whose exported bundle has a different directory name, update this default or
-    # set the ARTIFACT_DIR env var to override it.
-    ARTIFACT_DIR: str = (
-        "sparsegraphs/artifacts/wl_fddl_gpu_nci_full_atoms4096_20260719_123451_20260719_142411"
-    )
-
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
 
     @property
-    def artifact_dir_path(self) -> Path:
-        """Absolute path to the ML artifact bundle, resolved relative to backend/."""
-        path = Path(self.ARTIFACT_DIR)
+    def default_disease_id(self) -> str:
+        return DEFAULT_DISEASE_ID
+
+    def reference_diseases(self) -> tuple[ReferenceDisease, ...]:
+        return REFERENCE_DISEASES
+
+    def disease_ids(self) -> list[str]:
+        return [d.id for d in REFERENCE_DISEASES]
+
+    def disease(self, disease_id: str) -> ReferenceDisease:
+        for d in REFERENCE_DISEASES:
+            if d.id == disease_id:
+                return d
+        raise KeyError(disease_id)
+
+    def artifact_dir_path_for(self, disease_id: str) -> Path:
+        """Absolute path to a disease's bundle, resolved relative to backend/."""
+        path = Path(self.disease(disease_id).artifact_dir)
         return path if path.is_absolute() else BACKEND_DIR / path
+
+    @property
+    def artifact_dir_path(self) -> Path:
+        """Default disease's bundle — kept so SPARSEGRAPHS_DIR still resolves."""
+        return self.artifact_dir_path_for(self.default_disease_id)
 
 
 settings = Settings()

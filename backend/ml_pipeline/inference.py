@@ -214,15 +214,23 @@ class MolecularActivityPredictor:
         }
 
 
-_predictor: Optional[MolecularActivityPredictor] = None
+_predictors: dict[str, MolecularActivityPredictor] = {}
 _predictor_lock = threading.Lock()
 
 
-def get_predictor() -> MolecularActivityPredictor:
-    """Singleton accessor — loads artifacts on first call only."""
-    global _predictor
-    if _predictor is None:
+def get_predictor(disease_id: Optional[str] = None) -> MolecularActivityPredictor:
+    """Per-disease predictor accessor. Each bundle loads on first use only, so a
+    disease's ~28 MB dictionary isn't paid for until someone predicts against it.
+    `disease_id=None` returns the default disease (backward-compatible)."""
+    disease_id = disease_id or settings.default_disease_id
+    if disease_id not in _predictors:
         with _predictor_lock:
-            if _predictor is None:
-                _predictor = MolecularActivityPredictor(settings.artifact_dir_path)
-    return _predictor
+            if disease_id not in _predictors:
+                try:
+                    artifact_dir = settings.artifact_dir_path_for(disease_id)
+                except KeyError:
+                    raise ValueError(
+                        f"Unknown disease '{disease_id}'. Available: {settings.disease_ids()}"
+                    )
+                _predictors[disease_id] = MolecularActivityPredictor(artifact_dir)
+    return _predictors[disease_id]
