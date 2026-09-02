@@ -73,6 +73,7 @@ function AnalysisPage() {
   function handleModeChange(newMode: Mode) {
     if (newMode === mode) return;
     setMode(newMode);
+    setSmiles("");
     setError("");
     setVisualizeResult(null);
     setResolvedInfo(null);
