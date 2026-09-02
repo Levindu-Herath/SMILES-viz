@@ -6,7 +6,7 @@ import { PropRow } from "@/components/ui/PropRow";
 import { ApiError, getPredictionHeatmap, predictActivity, visualizeMolecule } from "@/lib/api";
 import { EXAMPLE_COMPOUNDS, looksLikeSmiles, resolveCompoundName } from "@/lib/smiles";
 import type { MoleculeData } from "@/types/molecule";
-import type { HeatmapResult, ModelInfo, PredictionResult } from "@/types/prediction";
+import type { DiseaseInfo, HeatmapResult, ModelInfo, PredictionResult } from "@/types/prediction";
 
 // How far probability must sit from the decision threshold to call it "high confidence".
 const CONFIDENCE_MARGIN = 0.15;
@@ -18,6 +18,8 @@ interface MoleculePredictProps {
   models?: ModelInfo[]; // classifier list for the selector (Predict tab only)
   defaultModel?: string;
   fixedModel?: string; // when set: hide the selector, run this model on Predict
+  diseases?: DiseaseInfo[]; // reference/Analyze only; enables the cancer-type selector
+  defaultDisease?: string;
   enableHeatmap?: boolean; // true only in Analyze
   showMoleculePreview?: boolean; // Analyze shows the 2D structure; Predict optional
 }
@@ -63,6 +65,28 @@ function InfoIcon() {
       <circle cx="12" cy="12" r="9" />
       <path d="M12 11v5" />
       <path d="M12 8h.01" />
+    </svg>
+  );
+}
+
+function MicroscopeIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="h-3.5 w-3.5"
+      aria-hidden="true"
+    >
+      <path d="M6 18h8" />
+      <path d="M3 22h18" />
+      <path d="M14 22a7 7 0 1 0 0-14h-1" />
+      <path d="M9 14h2" />
+      <path d="M9 12a2 2 0 0 1-2-2V6h4v4a2 2 0 0 1-2 2Z" />
+      <path d="M12 6V3a1 1 0 0 0-1-1H9.5" />
     </svg>
   );
 }
@@ -120,6 +144,8 @@ export function MoleculePredict({
   models = [],
   defaultModel,
   fixedModel,
+  diseases = [],
+  defaultDisease,
   enableHeatmap = false,
   showMoleculePreview = false,
 }: MoleculePredictProps) {
@@ -132,6 +158,8 @@ export function MoleculePredict({
   const [resolvedInfo, setResolvedInfo] = useState<ResolvedCompound | null>(null);
 
   const [selectedModel, setSelectedModel] = useState(fixedModel ?? defaultModel ?? "");
+  const [selectedDisease, setSelectedDisease] = useState<string>("");
+  const effectiveDisease = selectedDisease || defaultDisease || "";
   const [predictionResult, setPredictionResult] = useState<PredictionResult | null>(null);
   const [predictMoleculeData, setPredictMoleculeData] = useState<MoleculeData | null>(null);
   const [heatmapResult, setHeatmapResult] = useState<HeatmapResult | null>(null);
@@ -181,7 +209,7 @@ export function MoleculePredict({
     setLoading(true);
 
     const tasks: Promise<{ ok: true; kind: "predict" | "visualize" | "heatmap"; value: unknown } | { ok: false; kind: "predict" | "visualize" | "heatmap"; err: unknown }>[] = [
-      predictActivity(resolvedSmiles, modelName, modelId)
+      predictActivity(resolvedSmiles, modelName, modelId, effectiveDisease || undefined)
         .then((value) => ({ ok: true as const, kind: "predict" as const, value }))
         .catch((err: unknown) => ({ ok: false as const, kind: "predict" as const, err })),
     ];
@@ -196,7 +224,7 @@ export function MoleculePredict({
 
     if (enableHeatmap) {
       tasks.push(
-        getPredictionHeatmap(resolvedSmiles, modelName, modelId)
+        getPredictionHeatmap(resolvedSmiles, modelName, modelId, effectiveDisease || undefined)
           .then((value) => ({ ok: true as const, kind: "heatmap" as const, value }))
           .catch((err: unknown) => ({ ok: false as const, kind: "heatmap" as const, err })),
       );
@@ -258,6 +286,15 @@ export function MoleculePredict({
     setResolvedInfo(null);
   }
 
+  function handleSelectDisease(id: string) {
+    setSelectedDisease(id);
+    setPredictionResult(null);
+    setPredictMoleculeData(null);
+    setHeatmapResult(null);
+    setHeatmapError("");
+    setError("");
+  }
+
   const confidence =
     predictionResult &&
     (Math.abs(predictionResult.probability - predictionResult.threshold) >= CONFIDENCE_MARGIN
@@ -268,6 +305,44 @@ export function MoleculePredict({
 
   return (
     <div className="space-y-6">
+      {/* Cancer-type selector — reference/Analyze only */}
+      {diseases.length > 0 && (
+        <div className="space-y-2">
+          <h2 className="flex items-center gap-1.5 text-[11px] uppercase tracking-wider text-primary-500 font-medium">
+            <MicroscopeIcon />
+            Cancer type
+          </h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            {diseases.map((d) => {
+              const isSelected = effectiveDisease === d.id;
+              return (
+                <button
+                  key={d.id}
+                  type="button"
+                  onClick={() => handleSelectDisease(d.id)}
+                  aria-pressed={isSelected}
+                  className={`text-left rounded-lg border py-2.5 px-3 transition-all duration-150 ${
+                    isSelected
+                      ? "border-primary-500 bg-primary-50 ring-1 ring-primary-200"
+                      : "border-surface-border bg-surface-card hover:border-primary-200 hover:bg-primary-50/50"
+                  }`}
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span
+                      className={`h-2.5 w-2.5 rounded-full border shrink-0 ${
+                        isSelected ? "border-primary-500 bg-primary-500" : "border-surface-border"
+                      }`}
+                    />
+                    <span className="text-xs font-medium text-text-primary truncate">{d.label}</span>
+                  </div>
+                  <p className="mt-1 text-[10px] text-text-muted">NCI-{d.nci_id}</p>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Compound name / SMILES input */}
       <CompoundInput
         value={smiles}

@@ -1,5 +1,10 @@
 import type { MoleculeData } from "@/types/molecule";
-import type { AvailableModelsResponse, HeatmapResult, PredictionResult } from "@/types/prediction";
+import type {
+  AvailableDiseasesResponse,
+  AvailableModelsResponse,
+  HeatmapResult,
+  PredictionResult,
+} from "@/types/prediction";
 import type { DatasetListResponse, DownloadUrlResponse, UploadResponse } from "@/types/dataset";
 import type { ModelListResponse } from "@/types/model";
 import { supabase } from "./supabase";
@@ -89,13 +94,14 @@ export async function predictActivity(
   smiles: string,
   modelName: string,
   modelId: string = "reference",
+  disease?: string,
 ): Promise<PredictionResult> {
   const headers = await getAuthHeaders();
 
   const res = await fetch(`${getApiBase()}/api/predict`, {
     method: "POST",
     headers,
-    body: JSON.stringify({ smiles, model_name: modelName, model_id: modelId }),
+    body: JSON.stringify({ smiles, model_name: modelName, model_id: modelId, disease }),
   });
 
   if (res.status === 401) {
@@ -114,13 +120,33 @@ export async function getPredictionHeatmap(
   smiles: string,
   modelName: string,
   modelId: string = "reference",
+  disease?: string,
 ): Promise<HeatmapResult> {
   const headers = await getAuthHeaders();
 
   const res = await fetch(`${getApiBase()}/api/predict/heatmap`, {
     method: "POST",
     headers,
-    body: JSON.stringify({ smiles, model_name: modelName, model_id: modelId }),
+    body: JSON.stringify({ smiles, model_name: modelName, model_id: modelId, disease }),
+  });
+
+  if (res.status === 401) {
+    throw new ApiError("Sign in required for this feature.", 401);
+  }
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new ApiError(body.detail || `Server error: ${res.status}`, res.status);
+  }
+
+  return res.json();
+}
+
+export async function getAvailableDiseases(): Promise<AvailableDiseasesResponse> {
+  const headers = await getAuthHeaders();
+
+  const res = await fetch(`${getApiBase()}/api/predict/diseases`, {
+    headers,
   });
 
   if (res.status === 401) {

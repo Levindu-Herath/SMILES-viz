@@ -1,14 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { CompoundInput } from "@/components/molecule/CompoundInput";
 import { MoleculePredict } from "@/components/molecule/MoleculePredict";
 import { MoleculeResults } from "@/components/molecule/MoleculeResults";
 import { REFERENCE_PREDICT_MODEL } from "@/constants/models";
-import { ApiError, visualizeMolecule } from "@/lib/api";
+import { ApiError, getAvailableDiseases, visualizeMolecule } from "@/lib/api";
 import { EXAMPLE_COMPOUNDS, looksLikeSmiles, resolveCompoundName } from "@/lib/smiles";
 import type { MoleculeData } from "@/types/molecule";
+import type { DiseaseInfo } from "@/types/prediction";
 
 type Mode = "visualize" | "predict";
 
@@ -55,6 +56,19 @@ function AnalysisPage() {
 
   // Visualize-mode results
   const [visualizeResult, setVisualizeResult] = useState<MoleculeData | null>(null);
+
+  // Predict-mode cancer-type list (fetched here, handed down to MoleculePredict)
+  const [diseases, setDiseases] = useState<DiseaseInfo[]>([]);
+  const [defaultDisease, setDefaultDisease] = useState("");
+
+  useEffect(() => {
+    getAvailableDiseases()
+      .then((res) => {
+        setDiseases(res.diseases);
+        setDefaultDisease(res.default_disease);
+      })
+      .catch(() => {});
+  }, []);
 
   function handleModeChange(newMode: Mode) {
     if (newMode === mode) return;
@@ -167,7 +181,7 @@ function AnalysisPage() {
           <p className="text-sm text-text-secondary mt-2">
             {mode === "visualize"
               ? "View molecular structure, druglikeness, and absorption properties."
-              : "Predict anti-cancer activity using an AI model trained on NCI compound data."}
+              : "Choose a cancer type, then predict whether a molecule is active against it."}
           </p>
         </div>
 
@@ -221,6 +235,8 @@ function AnalysisPage() {
           <MoleculePredict
             modelId="reference"
             fixedModel={REFERENCE_PREDICT_MODEL}
+            diseases={diseases}
+            defaultDisease={defaultDisease}
             enableHeatmap
             showMoleculePreview
           />

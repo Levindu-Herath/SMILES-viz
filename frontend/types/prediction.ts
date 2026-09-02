@@ -10,6 +10,17 @@ export interface AvailableModelsResponse {
   default_model: string;
 }
 
+export interface DiseaseInfo {
+  id: string;
+  label: string;
+  nci_id: number;
+}
+
+export interface AvailableDiseasesResponse {
+  diseases: DiseaseInfo[];
+  default_disease: string;
+}
+
 export interface PredictionResult {
   smiles: string;
   model_name: string;
