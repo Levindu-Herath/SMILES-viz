@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { AuthGuard } from "@/components/auth/AuthGuard";
+import { CompoundInput } from "@/components/molecule/CompoundInput";
 import { MoleculePredict } from "@/components/molecule/MoleculePredict";
 import { MoleculeResults } from "@/components/molecule/MoleculeResults";
 import { ApiError, getAvailableModels, visualizeMolecule } from "@/lib/api";
@@ -187,48 +188,17 @@ function AnalysisPage() {
         {mode === "visualize" ? (
           <>
             {/* Compound name / SMILES input */}
-            <div className="space-y-2">
-              <label htmlFor="smiles-input" className="sr-only">
-                Compound name or SMILES notation
-              </label>
-              <div className="flex gap-3">
-                <div className="relative flex-1">
-                  <input
-                    id="smiles-input"
-                    type="text"
-                    value={smiles}
-                    onChange={(e) => handleSmilesChange(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") handleVisualize();
-                    }}
-                    placeholder="Enter a compound name or SMILES — e.g. aspirin, caffeine, CC(=O)O"
-                    className="w-full rounded-md border border-surface-border bg-surface-card text-text-primary pl-4 pr-10 py-3.5 text-base font-mono placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary-300 focus:ring-offset-2 focus:border-primary-500 transition-colors duration-150"
-                    spellCheck={false}
-                    autoComplete="off"
-                  />
-                  {smiles && (
-                    <button
-                      type="button"
-                      onClick={handleClearSmiles}
-                      title="Clear"
-                      className="absolute right-3 top-1/2 -translate-y-1/2 flex h-5 w-5 items-center justify-center rounded-full text-text-muted hover:text-primary-600 hover:bg-primary-50 transition-colors duration-150"
-                    >
-                      <svg
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="h-3.5 w-3.5"
-                        aria-hidden="true"
-                      >
-                        <path d="M18 6 6 18" />
-                        <path d="m6 6 12 12" />
-                      </svg>
-                    </button>
-                  )}
-                </div>
+            <CompoundInput
+              value={smiles}
+              onChange={handleSmilesChange}
+              onSubmit={handleVisualize}
+              onClear={handleClearSmiles}
+              onSelectExample={handleSelectExample}
+              examples={EXAMPLE_COMPOUNDS}
+              resolving={resolving}
+              resolvingTerm={resolvingTerm}
+              resolved={resolvedInfo}
+              submitSlot={
                 <button
                   type="button"
                   onClick={handleVisualize}
@@ -238,48 +208,8 @@ function AnalysisPage() {
                   <FlaskIcon />
                   {resolving ? "Looking up…" : loading ? "Analyzing…" : "Visualize"}
                 </button>
-              </div>
-
-              {resolving && (
-                <p className="text-sm text-text-secondary">
-                  Looking up &ldquo;{resolvingTerm}&rdquo; on PubChem…
-                </p>
-              )}
-
-              {resolvedInfo && (
-                <p className="text-xs text-text-muted">
-                  Resolved: {resolvedInfo.name} →{" "}
-                  <span className="font-mono text-primary-500">{resolvedInfo.smiles}</span>{" "}
-                  (
-                  <a
-                    href={`https://pubchem.ncbi.nlm.nih.gov/compound/${resolvedInfo.cid}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-primary-500 hover:underline"
-                  >
-                    PubChem CID: {resolvedInfo.cid}
-                  </a>
-                  )
-                </p>
-              )}
-
-              <div className="flex flex-wrap gap-2">
-                <span className="text-xs text-text-muted self-center mr-1">Try:</span>
-                {EXAMPLE_COMPOUNDS.map((name) => (
-                  <button
-                    key={name}
-                    type="button"
-                    onClick={() => handleSelectExample(name)}
-                    className="rounded-full border border-surface-border px-3 py-1 text-xs text-text-secondary hover:border-primary-300 hover:bg-primary-50 hover:text-primary-500 transition-colors duration-150"
-                  >
-                    {name}
-                  </button>
-                ))}
-              </div>
-              <p className="text-xs text-text-muted">
-                Accepts compound names, drug names, or SMILES notation
-              </p>
-            </div>
+              }
+            />
 
             {error && (
               <div className="rounded-lg border border-danger-border bg-danger-bg px-5 py-4 text-sm text-danger-text">
