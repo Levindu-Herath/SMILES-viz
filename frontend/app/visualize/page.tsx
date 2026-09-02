@@ -135,8 +135,8 @@ function AnalysisPage() {
     setResolvedInfo(null);
   }
 
-  function handleSelectExample(exampleName: string) {
-    setSmiles(exampleName);
+  function handleSelectExample(exampleSmiles: string) {
+    setSmiles(exampleSmiles);
     setError("");
     setVisualizeResult(null);
     setResolvedInfo(null);
