@@ -455,7 +455,7 @@ export default function TrainPage() {
         </div>
 
         {pageState === "checking" && (
-          <div className="rounded-lg border border-surface-border bg-surface-card p-10 text-center">
+          <div className="rounded-lg border border-surface-border bg-surface-card p-10 text-center shadow-card">
             <p className="text-sm text-text-muted">Checking for local trainer…</p>
           </div>
         )}
@@ -483,7 +483,7 @@ export default function TrainPage() {
               </button>
             </div>
 
-            <div className="rounded-lg border border-surface-border bg-surface-card overflow-hidden">
+            <div className="rounded-lg border border-surface-border bg-surface-card overflow-hidden shadow-card">
               <button
                 type="button"
                 onClick={() => setSetupExpanded((v) => !v)}
@@ -534,7 +534,7 @@ export default function TrainPage() {
 
         {pageState === "form" && (
           <div className="space-y-6">
-            <div className="rounded-lg border border-surface-border bg-surface-card p-6 space-y-4">
+            <div className="rounded-lg border border-surface-border bg-surface-card p-6 space-y-4 shadow-card">
               <div>
                 <label className="block text-sm font-medium text-text-secondary mb-1.5">
                   Dataset file path
@@ -689,7 +689,7 @@ export default function TrainPage() {
             </div>
 
             {validation?.is_valid && (
-              <div className="rounded-lg border border-surface-border bg-surface-card p-6 space-y-5">
+              <div className="rounded-lg border border-surface-border bg-surface-card p-6 space-y-5 shadow-card">
                 <div className={`grid gap-4 ${isSdfDataset ? "" : "sm:grid-cols-2"}`}>
                   {!isSdfDataset && (
                     <div>
@@ -811,7 +811,7 @@ export default function TrainPage() {
         )}
 
         {pageState === "training" && (
-          <div className="rounded-lg border border-surface-border bg-surface-card p-8 space-y-6">
+          <div className="rounded-lg border border-surface-border bg-surface-card p-8 space-y-6 shadow-card">
             <div className="flex items-center justify-between">
               <h2 className="text-base font-semibold text-text-primary">Training in progress</h2>
               <span className="text-sm text-text-secondary font-mono">{formatElapsed(elapsed)}</span>
@@ -854,7 +854,7 @@ export default function TrainPage() {
 
         {pageState === "cancelled" && (
           <div className="space-y-6">
-            <div className="rounded-lg border border-surface-border bg-surface-card p-6 space-y-3">
+            <div className="rounded-lg border border-surface-border bg-surface-card p-6 space-y-3 shadow-card">
               <div className="flex items-center gap-2">
                 <span className="h-2 w-2 rounded-full bg-text-muted" />
                 <h2 className="text-base font-semibold text-text-primary">Training cancelled</h2>

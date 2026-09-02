@@ -49,7 +49,7 @@ export function CompoundInput({
   submitSlot,
 }: CompoundInputProps) {
   return (
-    <div className="rounded-xl border border-surface-border bg-surface-bg p-4 space-y-3">
+    <div className="rounded-xl border border-surface-border bg-surface-card p-4 space-y-3 shadow-card">
       <label htmlFor="smiles-input" className="sr-only">
         Compound name or SMILES notation
       </label>
