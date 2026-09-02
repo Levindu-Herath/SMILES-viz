@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
+import { CompoundInput } from "@/components/molecule/CompoundInput";
 import { PropRow } from "@/components/ui/PropRow";
 import { ApiError, getPredictionHeatmap, predictActivity, visualizeMolecule } from "@/lib/api";
 import { EXAMPLE_COMPOUNDS, looksLikeSmiles, resolveCompoundName } from "@/lib/smiles";
@@ -263,92 +264,19 @@ export function MoleculePredict({
   const hasResults = loading || Boolean(predictionResult);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {/* Compound name / SMILES input */}
-      <div className="space-y-2">
-        <label htmlFor="smiles-input" className="sr-only">
-          Compound name or SMILES notation
-        </label>
-        <div className="flex gap-3">
-          <div className="relative flex-1">
-            <input
-              id="smiles-input"
-              type="text"
-              value={smiles}
-              onChange={(e) => handleSmilesChange(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") handleSubmit();
-              }}
-              placeholder="Enter a compound name or SMILES — e.g. aspirin, caffeine, CC(=O)O"
-              className="w-full rounded-md border border-surface-border bg-surface-card text-text-primary pl-4 pr-10 py-3.5 text-base font-mono placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary-300 focus:ring-offset-2 focus:border-primary-500 transition-colors duration-150"
-              spellCheck={false}
-              autoComplete="off"
-            />
-            {smiles && (
-              <button
-                type="button"
-                onClick={handleClearSmiles}
-                title="Clear"
-                className="absolute right-3 top-1/2 -translate-y-1/2 flex h-5 w-5 items-center justify-center rounded-full text-text-muted hover:text-primary-600 hover:bg-primary-50 transition-colors duration-150"
-              >
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="h-3.5 w-3.5"
-                  aria-hidden="true"
-                >
-                  <path d="M18 6 6 18" />
-                  <path d="m6 6 12 12" />
-                </svg>
-              </button>
-            )}
-          </div>
-        </div>
-
-        {resolving && (
-          <p className="text-sm text-text-secondary">
-            Looking up &ldquo;{resolvingTerm}&rdquo; on PubChem…
-          </p>
-        )}
-
-        {resolvedInfo && (
-          <p className="text-xs text-text-muted">
-            Resolved: {resolvedInfo.name} →{" "}
-            <span className="font-mono text-primary-500">{resolvedInfo.smiles}</span>{" "}
-            (
-            <a
-              href={`https://pubchem.ncbi.nlm.nih.gov/compound/${resolvedInfo.cid}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-primary-500 hover:underline"
-            >
-              PubChem CID: {resolvedInfo.cid}
-            </a>
-            )
-          </p>
-        )}
-
-        <div className="flex flex-wrap gap-2">
-          <span className="text-xs text-text-muted self-center mr-1">Try:</span>
-          {EXAMPLE_COMPOUNDS.map((name) => (
-            <button
-              key={name}
-              type="button"
-              onClick={() => handleSelectExample(name)}
-              className="rounded-full border border-surface-border px-3 py-1 text-xs text-text-secondary hover:border-primary-300 hover:bg-primary-50 hover:text-primary-500 transition-colors duration-150"
-            >
-              {name}
-            </button>
-          ))}
-        </div>
-        <p className="text-xs text-text-muted">
-          Accepts compound names, drug names, or SMILES notation
-        </p>
-      </div>
+      <CompoundInput
+        value={smiles}
+        onChange={handleSmilesChange}
+        onSubmit={handleSubmit}
+        onClear={handleClearSmiles}
+        onSelectExample={handleSelectExample}
+        examples={EXAMPLE_COMPOUNDS}
+        resolving={resolving}
+        resolvingTerm={resolvingTerm}
+        resolved={resolvedInfo}
+      />
 
       {/* Classifier selector — clicking a model runs the prediction */}
       <div className="space-y-2">
@@ -392,8 +320,16 @@ export function MoleculePredict({
                         {loading && isSelected ? "Predicting…" : model.name}
                       </span>
                     </div>
-                    <span className="text-[10px] text-text-muted font-mono shrink-0">
-                      {model.roc_auc.toFixed(3)}
+                    <span
+                      className="flex flex-col items-end shrink-0"
+                      title="ROC-AUC — higher is better"
+                    >
+                      <span className="text-[9px] uppercase tracking-wide text-text-muted">
+                        ROC-AUC
+                      </span>
+                      <span className="text-[10px] text-text-secondary font-mono">
+                        {model.roc_auc.toFixed(3)}
+                      </span>
                     </span>
                   </div>
                 </div>
@@ -425,11 +361,11 @@ export function MoleculePredict({
       {!loading && predictionResult && (
         <div className="animate-fade-in space-y-6">
           {/* 1. Prediction result */}
-          <div className="rounded-lg border border-surface-border bg-surface-card p-5 space-y-3">
+          <div className="rounded-lg border border-surface-border bg-surface-card p-5 space-y-4">
             <div>
               <div className="flex items-baseline gap-3">
                 <p
-                  className={`text-2xl font-bold ${
+                  className={`text-3xl font-bold ${
                     predictionResult.prediction === "Active" ? "text-success-text" : "text-danger-text"
                   }`}
                 >
@@ -440,7 +376,7 @@ export function MoleculePredict({
                 </p>
                 <p className="text-xs text-text-muted">probability</p>
               </div>
-              <p className="mt-1.5 text-sm text-text-secondary">
+              <p className="mt-2 text-sm text-text-secondary">
                 {predictionResult.prediction === "Active"
                   ? "This molecule is predicted to inhibit cancer cell growth — a candidate anti-cancer compound."
                   : "This molecule is predicted to show no significant anti-cancer activity in this screen."}
@@ -455,7 +391,7 @@ export function MoleculePredict({
               <div
                 className="absolute inset-y-0 w-0.5 bg-primary-700"
                 style={{ left: `${predictionResult.threshold * 100}%` }}
-                title={`Threshold: ${predictionResult.threshold}`}
+                title="Decision threshold"
               />
             </div>
 
@@ -464,7 +400,10 @@ export function MoleculePredict({
                 <p className="text-[10px] text-text-muted mb-0.5">Model</p>
                 <p className="text-xs text-text-primary truncate">{predictionResult.model_name}</p>
               </div>
-              <div className="rounded-lg border border-surface-border p-2 text-center">
+              <div
+                className="rounded-lg border border-surface-border p-2 text-center"
+                title="A molecule is called Active when its predicted probability is at or above this cutoff."
+              >
                 <p className="text-[10px] text-text-muted mb-0.5">Threshold</p>
                 <p className="text-xs text-text-primary">{predictionResult.threshold.toFixed(2)}</p>
               </div>
@@ -659,8 +598,8 @@ export function MoleculePredict({
           <div className="rounded-lg border border-surface-border bg-surface-card p-4">
             <h2 className="text-sm font-medium text-text-secondary mb-2">Pipeline</h2>
             <p className="text-xs font-mono text-text-muted leading-relaxed">
-              SMILES → Graph → WL kernel (3329-dim) → FDDL sparse coding (32-dim) →
-              MaxAbsScaler → {predictionResult.model_name}
+              SMILES → Graph → WL kernel → FDDL sparse coding → MaxAbsScaler →{" "}
+              {predictionResult.model_name}
             </p>
           </div>
         </div>
