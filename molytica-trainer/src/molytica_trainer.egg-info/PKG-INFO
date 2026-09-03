@@ -1,19 +1,21 @@
 Metadata-Version: 2.4
 Name: molytica-trainer
-Version: 0.1.0
+Version: 0.2.0
 Summary: Local training server for molytica, exposing a FastAPI API for model training and evaluation.
-Requires-Python: >=3.10
+Requires-Python: >=3.11
 Description-Content-Type: text/markdown
 Requires-Dist: fastapi>=0.110
 Requires-Dist: uvicorn[standard]>=0.29
 Requires-Dist: click>=8.0
-Requires-Dist: scikit-learn>=1.3
+Requires-Dist: scikit-learn==1.9.0
+Requires-Dist: scipy>=1.13.0
+Requires-Dist: joblib==1.5.3
 Requires-Dist: numpy
 Requires-Dist: pandas
 Requires-Dist: sse-starlette>=1.6
 Requires-Dist: torch>=2.0
-Requires-Dist: gensim>=4.0
-Requires-Dist: networkx>=3.0
+Requires-Dist: gensim==4.4.0
+Requires-Dist: networkx==3.6.1
 
 # molytica-trainer
 
