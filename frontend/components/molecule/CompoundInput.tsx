@@ -3,14 +3,14 @@
 import type { ReactNode } from "react";
 import type { ExampleMolecule } from "@/lib/smiles";
 
-type ResolvedCompound = { name: string; smiles: string; cid: number };
+type ResolvedCompound = { name: string; smiles: string; cid?: number };
 
 interface CompoundInputProps {
   value: string;
   onChange: (value: string) => void;
   onSubmit: () => void;
   onClear: () => void;
-  onSelectExample: (smiles: string) => void;
+  onSelectExample: (example: ExampleMolecule) => void;
   examples: readonly ExampleMolecule[];
   resolving: boolean;
   resolvingTerm: string;
@@ -107,14 +107,16 @@ export function CompoundInput({
             Resolved {resolved.name} →{" "}
             <span className="font-mono">{resolved.smiles}</span>
           </span>
-          <a
-            href={`https://pubchem.ncbi.nlm.nih.gov/compound/${resolved.cid}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="shrink-0 underline hover:no-underline"
-          >
-            PubChem CID: {resolved.cid}
-          </a>
+          {resolved.cid !== undefined && (
+            <a
+              href={`https://pubchem.ncbi.nlm.nih.gov/compound/${resolved.cid}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="shrink-0 underline hover:no-underline"
+            >
+              PubChem CID: {resolved.cid}
+            </a>
+          )}
         </p>
       )}
 
@@ -124,7 +126,7 @@ export function CompoundInput({
           <button
             key={example.label}
             type="button"
-            onClick={() => onSelectExample(example.smiles)}
+            onClick={() => onSelectExample(example)}
             className="rounded-full border border-surface-border bg-surface-card px-3 py-1 text-xs text-text-secondary hover:border-primary-300 hover:bg-primary-50 hover:text-primary-500 transition-colors duration-150"
           >
             {example.label}

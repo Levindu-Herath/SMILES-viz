@@ -4,14 +4,20 @@ import { useState, type ReactNode } from "react";
 import { CompoundInput } from "@/components/molecule/CompoundInput";
 import { PropRow } from "@/components/ui/PropRow";
 import { ApiError, getPredictionHeatmap, predictActivity, visualizeMolecule } from "@/lib/api";
-import { EXAMPLE_COMPOUNDS, looksLikeSmiles, resolveCompoundName } from "@/lib/smiles";
+import {
+  EXAMPLE_COMPOUNDS,
+  findExampleByLabel,
+  looksLikeSmiles,
+  resolveCompoundName,
+  type ExampleMolecule,
+} from "@/lib/smiles";
 import type { MoleculeData } from "@/types/molecule";
 import type { DiseaseInfo, HeatmapResult, ModelInfo, PredictionResult } from "@/types/prediction";
 
 // How far probability must sit from the decision threshold to call it "high confidence".
 const CONFIDENCE_MARGIN = 0.15;
 
-type ResolvedCompound = { name: string; smiles: string; cid: number };
+type ResolvedCompound = { name: string; smiles: string; cid?: number };
 
 interface MoleculePredictProps {
   modelId: string; // "reference" for Analyze, bundle.id for Predict
@@ -172,12 +178,19 @@ export function MoleculePredict({
   // compound/drug names through PubChem first. Returns null (with `error` already
   // set) if resolution failed, so callers can bail out before touching the backend.
   async function resolveSmiles(rawInput: string): Promise<string | null> {
-    setResolvedInfo(null);
+    const example = findExampleByLabel(rawInput);
+    if (example) {
+      setResolvedInfo({ name: example.label, smiles: example.smiles });
+      return example.smiles;
+    }
 
     if (looksLikeSmiles(rawInput)) {
+      // Already SMILES — nothing to resolve. Leave resolvedInfo as-is: a Try-example
+      // selection may have just set it, and it should keep showing through submit.
       return rawInput;
     }
 
+    setResolvedInfo(null);
     setResolvingTerm(rawInput);
     setResolving(true);
     try {
@@ -275,15 +288,15 @@ export function MoleculePredict({
     setResolvedInfo(null);
   }
 
-  function handleSelectExample(exampleSmiles: string) {
-    setSmiles(exampleSmiles);
+  function handleSelectExample(example: ExampleMolecule) {
+    setSmiles(example.label);
     setError("");
     setPredictionResult(null);
     setPredictMoleculeData(null);
     setHeatmapResult(null);
     setHeatmapError("");
     setSelectedModel(fixedModel ?? "");
-    setResolvedInfo(null);
+    setResolvedInfo({ name: example.label, smiles: example.smiles });
   }
 
   function handleSelectDisease(id: string) {
