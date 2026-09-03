@@ -40,7 +40,7 @@ REFERENCE_DISEASES: tuple[ReferenceDisease, ...] = (
     ),
     ReferenceDisease(
         id="melanoma",
-        label="Melanoma",
+        label="Melanoma (skin cancer)",
         nci_id=33,
         artifact_dir="sparsegraphs/artifacts/wl_fddl_gpu_nci_full_id33_atoms4096_20260902_152156_20260902_153206",
     ),
