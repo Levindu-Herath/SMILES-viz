@@ -7,13 +7,19 @@ import { MoleculePredict } from "@/components/molecule/MoleculePredict";
 import { MoleculeResults } from "@/components/molecule/MoleculeResults";
 import { REFERENCE_PREDICT_MODEL } from "@/constants/models";
 import { ApiError, getAvailableDiseases, visualizeMolecule } from "@/lib/api";
-import { EXAMPLE_COMPOUNDS, looksLikeSmiles, resolveCompoundName } from "@/lib/smiles";
+import {
+  EXAMPLE_COMPOUNDS,
+  findExampleByLabel,
+  looksLikeSmiles,
+  resolveCompoundName,
+  type ExampleMolecule,
+} from "@/lib/smiles";
 import type { MoleculeData } from "@/types/molecule";
 import type { DiseaseInfo } from "@/types/prediction";
 
 type Mode = "visualize" | "predict";
 
-type ResolvedCompound = { name: string; smiles: string; cid: number };
+type ResolvedCompound = { name: string; smiles: string; cid?: number };
 
 // The backend treats auth as optional, but some features may still require it —
 // surface a friendly nudge instead of a raw "session expired" error.
@@ -83,12 +89,19 @@ function AnalysisPage() {
   // compound/drug names through PubChem first. Returns null (with `error` already
   // set) if resolution failed, so callers can bail out before touching the backend.
   async function resolveSmiles(rawInput: string): Promise<string | null> {
-    setResolvedInfo(null);
+    const example = findExampleByLabel(rawInput);
+    if (example) {
+      setResolvedInfo({ name: example.label, smiles: example.smiles });
+      return example.smiles;
+    }
 
     if (looksLikeSmiles(rawInput)) {
+      // Already SMILES — nothing to resolve. Leave resolvedInfo as-is: a Try-example
+      // selection may have just set it, and it should keep showing through submit.
       return rawInput;
     }
 
+    setResolvedInfo(null);
     setResolvingTerm(rawInput);
     setResolving(true);
     try {
@@ -136,11 +149,11 @@ function AnalysisPage() {
     setResolvedInfo(null);
   }
 
-  function handleSelectExample(exampleSmiles: string) {
-    setSmiles(exampleSmiles);
+  function handleSelectExample(example: ExampleMolecule) {
+    setSmiles(example.label);
     setError("");
     setVisualizeResult(null);
-    setResolvedInfo(null);
+    setResolvedInfo({ name: example.label, smiles: example.smiles });
   }
 
   return (

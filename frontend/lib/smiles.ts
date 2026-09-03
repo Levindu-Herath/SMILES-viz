@@ -7,9 +7,10 @@ export interface ExampleMolecule {
 }
 
 // Curated "Try:" examples. Each carries its own canonical SMILES so selecting one
-// loads it directly (see looksLikeSmiles in resolveSmiles) instead of round-tripping
-// through a PubChem name lookup -- important for the less common names below, where
-// PubChem's name resolution can be unreliable.
+// can display the familiar name while resolving straight to that SMILES (see
+// findExampleByLabel below) instead of round-tripping through a PubChem name
+// lookup -- important for the less common names below, where PubChem's name
+// resolution can be unreliable.
 export const EXAMPLE_COMPOUNDS: readonly ExampleMolecule[] = [
   { label: "Aspirin", smiles: "CC(=O)Oc1ccccc1C(=O)O" },
   { label: "Paracetamol", smiles: "CC(=O)Nc1ccc(O)cc1" },
@@ -33,6 +34,14 @@ export const EXAMPLE_COMPOUNDS: readonly ExampleMolecule[] = [
       "CCC(=O)CC(O)CC(C)CC(NC(=O)C1CC(C)CN1C(=O)C=CC(C)CC)C(=O)NC(C(=O)NC(C)(C)C(=O)NC(CC(C)C)C(=O)NC(CC(C)C)C(=O)NC(C)(C)C(=O)NC(C)(C)C(=O)NCCC(=O)NC(C)CN(C)C)C(O)C(C)C",
   },
 ] as const;
+
+// Matches typed text against a curated example by name, so a Try-example selection
+// (which fills the input with the familiar label, not raw SMILES) resolves straight
+// to its known-good SMILES instead of a live PubChem lookup.
+export function findExampleByLabel(input: string): ExampleMolecule | undefined {
+  const trimmed = input.trim().toLowerCase();
+  return EXAMPLE_COMPOUNDS.find((e) => e.label.toLowerCase() === trimmed);
+}
 
 // Heuristic only -- ambiguous input falls through to a PubChem lookup, and if that
 // fails the raw input is still tried against the backend as a SMILES string, so a

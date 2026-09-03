@@ -6,7 +6,6 @@ import { useAuth } from "@/components/auth/AuthProvider";
 import { MoleculePredict } from "@/components/molecule/MoleculePredict";
 import { deleteModel, listMyModels } from "@/lib/api";
 import type { ModelBundle } from "@/types/model";
-import type { ModelInfo } from "@/types/prediction";
 
 function LockIcon() {
   return (
@@ -33,15 +32,6 @@ function formatDate(iso: string): string {
     hour: "2-digit",
     minute: "2-digit",
   });
-}
-
-function bundleToModelInfos(bundle: ModelBundle): ModelInfo[] {
-  return bundle.available_models.map((name) => ({
-    name,
-    accuracy: bundle.metrics[name]?.accuracy ?? 0,
-    roc_auc: bundle.metrics[name]?.roc_auc ?? 0,
-    threshold: 0.5,
-  }));
 }
 
 function PredictPage() {
@@ -140,8 +130,7 @@ function PredictPage() {
 
           <MoleculePredict
             modelId={selected.id}
-            models={bundleToModelInfos(selected)}
-            defaultModel={selected.default_model}
+            fixedModel={selected.default_model}
             enableHeatmap={false}
           />
         </div>
@@ -189,9 +178,11 @@ function PredictPage() {
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <h3 className="text-sm font-medium text-text-primary truncate">{bundle.name}</h3>
+                    <h3 className="text-sm font-medium text-text-primary truncate">
+                      {bundle.dataset || bundle.name}
+                    </h3>
                     {bundle.dataset && (
-                      <p className="mt-0.5 text-xs text-text-muted truncate">{bundle.dataset}</p>
+                      <p className="mt-0.5 text-xs text-text-muted truncate">{bundle.name}</p>
                     )}
                   </div>
                   <button
@@ -205,12 +196,11 @@ function PredictPage() {
                     Delete
                   </button>
                 </div>
-                <div className="flex items-center gap-4 text-xs text-text-secondary">
-                  <span>
-                    {bundle.available_models.length} classifier
-                    {bundle.available_models.length === 1 ? "" : "s"}
-                  </span>
-                </div>
+                {bundle.available_models.length > 1 && (
+                  <div className="flex items-center gap-4 text-xs text-text-secondary">
+                    <span>{bundle.available_models.length} classifiers</span>
+                  </div>
+                )}
                 <p className="text-xs text-text-muted">{formatDate(bundle.created_at)}</p>
               </div>
             ))}
