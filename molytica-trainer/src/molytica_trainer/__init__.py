@@ -11,4 +11,4 @@ if _conda_prefix:
         if os.path.isdir(_dll_dir):
             os.add_dll_directory(_dll_dir)
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"

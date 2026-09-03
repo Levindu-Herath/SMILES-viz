@@ -13,6 +13,7 @@ if _conda_prefix:
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from molytica_trainer.server.middleware import PrivateNetworkAccessMiddleware
 from molytica_trainer.server.routers import health, models, train, upload, validate
 
 DEFAULT_ORIGINS = ["http://localhost:3000", "http://127.0.0.1:3000"]
@@ -35,6 +36,7 @@ def create_app() -> FastAPI:
         allow_methods=["GET", "POST"],
         allow_headers=["*"],
     )
+    app.add_middleware(PrivateNetworkAccessMiddleware)
 
     app.include_router(health.router)
     app.include_router(validate.router)
