@@ -3,6 +3,7 @@ Training pipeline runner.
 Orchestrates: dataset loading → graph conversion → WL encoding → FDDL → scaling → classifier → evaluation → save bundle.
 """
 
+import re
 import time
 from pathlib import Path
 from typing import Callable, Optional
@@ -32,6 +33,15 @@ CLASSIFIER_MAP = {
     "linear_svm": "predict_svm",
     "random_forest": "predict_random_forest",
 }
+
+_UPLOAD_PREFIX_RE = re.compile(r"^[0-9a-f]{32}_")
+
+
+def _clean_dataset_name(stem: str) -> str:
+    """Strip the "<uuid4hex>_" prefix the /upload route prepends to stored
+    dataset files. Directory-browsed files have no prefix, so the anchored
+    pattern leaves real names untouched."""
+    return _UPLOAD_PREFIX_RE.sub("", stem)
 
 
 def _map_labels_to_pm1(labels_raw: list) -> np.ndarray:
@@ -262,7 +272,7 @@ def run_training(
     output_path = save_bundle(
         root=output_dir,
         implementation="molytica_trainer",
-        dataset=Path(file_path).stem,
+        dataset=_clean_dataset_name(Path(file_path).stem),
         encoder=encoder,
         dict_learner=dict_learner,
         scaler=scaler,

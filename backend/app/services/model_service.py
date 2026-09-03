@@ -12,6 +12,7 @@ keyed by model id.
 
 import io
 import json
+import re
 import shutil
 import tarfile
 import threading
@@ -31,6 +32,20 @@ CACHE_ROOT = BACKEND_DIR / "artifacts" / "published"
 BUCKET_NAME = "models"
 TABLE_NAME = "models"
 MAX_FILE_SIZE = 200 * 1024 * 1024  # 200MB
+
+# uuid4().hex is 32 lowercase hex chars; the trainer's /upload route stores
+# browser uploads as "<uuid4hex>_<original>". This anchored pattern strips only
+# that exact upload artifact — directory-browsed datasets have no prefix and are
+# left untouched.
+_UPLOAD_PREFIX_RE = re.compile(r"^[0-9a-f]{32}_")
+
+
+def _clean_dataset_name(dataset: Optional[str]) -> Optional[str]:
+    """Strip the trainer's upload prefix from a manifest dataset name."""
+    if not dataset:
+        return dataset
+    return _UPLOAD_PREFIX_RE.sub("", dataset)
+
 
 _client: Optional[Client] = None
 _predictors: dict[str, MolecularActivityPredictor] = {}
@@ -82,7 +97,7 @@ def publish_model(file: UploadFile, name: str, user_id: str) -> dict:
     row = {
         "user_id": user_id,
         "name": name,
-        "dataset": manifest.get("dataset"),
+        "dataset": _clean_dataset_name(manifest.get("dataset")),
         "implementation": manifest.get("implementation"),
         "default_model": default_model,
         "available_models": available_models,

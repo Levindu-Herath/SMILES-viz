@@ -189,9 +189,11 @@ function PredictPage() {
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <h3 className="text-sm font-medium text-text-primary truncate">{bundle.name}</h3>
+                    <h3 className="text-sm font-medium text-text-primary truncate">
+                      {bundle.dataset || bundle.name}
+                    </h3>
                     {bundle.dataset && (
-                      <p className="mt-0.5 text-xs text-text-muted truncate">{bundle.dataset}</p>
+                      <p className="mt-0.5 text-xs text-text-muted truncate">{bundle.name}</p>
                     )}
                   </div>
                   <button
@@ -205,12 +207,11 @@ function PredictPage() {
                     Delete
                   </button>
                 </div>
-                <div className="flex items-center gap-4 text-xs text-text-secondary">
-                  <span>
-                    {bundle.available_models.length} classifier
-                    {bundle.available_models.length === 1 ? "" : "s"}
-                  </span>
-                </div>
+                {bundle.available_models.length > 1 && (
+                  <div className="flex items-center gap-4 text-xs text-text-secondary">
+                    <span>{bundle.available_models.length} classifiers</span>
+                  </div>
+                )}
                 <p className="text-xs text-text-muted">{formatDate(bundle.created_at)}</p>
               </div>
             ))}
