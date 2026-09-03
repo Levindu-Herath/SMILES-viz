@@ -6,7 +6,6 @@ import { useAuth } from "@/components/auth/AuthProvider";
 import { MoleculePredict } from "@/components/molecule/MoleculePredict";
 import { deleteModel, listMyModels } from "@/lib/api";
 import type { ModelBundle } from "@/types/model";
-import type { ModelInfo } from "@/types/prediction";
 
 function LockIcon() {
   return (
@@ -33,15 +32,6 @@ function formatDate(iso: string): string {
     hour: "2-digit",
     minute: "2-digit",
   });
-}
-
-function bundleToModelInfos(bundle: ModelBundle): ModelInfo[] {
-  return bundle.available_models.map((name) => ({
-    name,
-    accuracy: bundle.metrics[name]?.accuracy ?? 0,
-    roc_auc: bundle.metrics[name]?.roc_auc ?? 0,
-    threshold: 0.5,
-  }));
 }
 
 function PredictPage() {
@@ -140,8 +130,7 @@ function PredictPage() {
 
           <MoleculePredict
             modelId={selected.id}
-            models={bundleToModelInfos(selected)}
-            defaultModel={selected.default_model}
+            fixedModel={selected.default_model}
             enableHeatmap={false}
           />
         </div>
