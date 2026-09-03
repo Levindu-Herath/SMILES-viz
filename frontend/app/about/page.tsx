@@ -46,11 +46,10 @@ export default function AboutPage() {
           <p className="text-sm leading-relaxed text-text-secondary">
             Molytica is developed as a Final Year Project by a team of undergraduate students
             from the Department of Electrical and Information Engineering, Faculty of
-            Engineering, University of Ruhuna, under the supervision of Dr. Kaveen Liyanage.
-            Following the Computer Engineering specialization, our team built Molytica to make
-            cheminformatics research pipelines accessible through a modern web interface,
-            bridging the gap between complex molecular analysis and practical drug discovery
-            workflows.
+            Engineering, University of Ruhuna. Following the Computer Engineering
+            specialization, our team built Molytica to make cheminformatics research pipelines
+            accessible through a modern web interface, bridging the gap between complex
+            molecular analysis and practical drug discovery workflows.
           </p>
         </section>
 
@@ -90,19 +89,14 @@ export default function AboutPage() {
           </div>
         </section>
 
-        {/* Affiliation */}
+        {/* Supervisor */}
         <section className="rounded-lg border border-surface-border bg-surface-card p-5">
           <h2 className="text-[11px] font-semibold text-primary-500 uppercase tracking-wider mb-3">
-            Affiliation
+            Supervisor
           </h2>
-          <p className="text-sm leading-relaxed text-text-secondary">
-            University of Ruhuna
-            <br />
-            Faculty of Engineering
-            <br />
-            Department of Electrical and Information Engineering
-            <br />
-            Computer Engineering Program
+          <p className="text-sm font-semibold text-text-primary">Dr. Kaveen Liyanage</p>
+          <p className="mt-1 text-xs text-text-secondary">
+            Department of Electrical and Information Engineering, University of Ruhuna
           </p>
         </section>
 
