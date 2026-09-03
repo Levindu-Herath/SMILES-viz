@@ -21,6 +21,7 @@ src/molytica_trainer/pipeline/wl.py
 src/molytica_trainer/pipeline/wl_hashing.py
 src/molytica_trainer/server/__init__.py
 src/molytica_trainer/server/app.py
+src/molytica_trainer/server/middleware.py
 src/molytica_trainer/server/routers/__init__.py
 src/molytica_trainer/server/routers/health.py
 src/molytica_trainer/server/routers/models.py
