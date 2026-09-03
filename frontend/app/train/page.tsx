@@ -518,14 +518,9 @@ export default function TrainPage() {
                   <SetupStep number={4} title="Start the trainer server">
                     <CodeBlock code="python -m molytica_trainer.cli" />
                     <p className="text-xs text-text-muted italic">
-                      On Windows, use this instead of the molytica-train command
+                      On macOS/Linux, you can use molytica-train instead
                     </p>
                   </SetupStep>
-
-                  <div className="border-t border-surface-border pt-4 space-y-2">
-                    <p className="text-sm font-medium text-text-primary">Alternative: Docker</p>
-                    <CodeBlock code={`docker pull smiles-viz-trainer\ndocker run -p 5000:5000 smiles-viz-trainer`} />
-                  </div>
                 </div>
               )}
             </div>
