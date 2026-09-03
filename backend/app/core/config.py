@@ -25,8 +25,6 @@ class ReferenceDisease:
 
 # Single source of truth for the built-in reference predictors. To add a cancer
 # type, append one entry whose bundle exists in the pinned sparsegraphs commit.
-# (Melanoma / NCI-33 is intentionally omitted — its CS-FDDL bundle needs a loader
-# change; see the project notes.)
 REFERENCE_DISEASES: tuple[ReferenceDisease, ...] = (
     ReferenceDisease(
         id="lung",
@@ -39,6 +37,12 @@ REFERENCE_DISEASES: tuple[ReferenceDisease, ...] = (
         label="Prostate cancer",
         nci_id=41,
         artifact_dir="sparsegraphs/artifacts/wl_fddl_gpu_nci_full_id41_atoms4096_20260902_025157_20260902_025843",
+    ),
+    ReferenceDisease(
+        id="melanoma",
+        label="Melanoma (skin cancer)",
+        nci_id=33,
+        artifact_dir="sparsegraphs/artifacts/wl_fddl_gpu_nci_full_id33_atoms4096_20260902_152156_20260902_153206",
     ),
 )
 DEFAULT_DISEASE_ID = "lung"

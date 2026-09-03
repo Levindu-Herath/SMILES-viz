@@ -35,14 +35,6 @@ function formatDate(iso: string): string {
   });
 }
 
-function bestRocAuc(metrics: ModelBundle["metrics"]): string {
-  const values = Object.values(metrics)
-    .map((m) => m.roc_auc)
-    .filter((v): v is number => typeof v === "number");
-  if (values.length === 0) return "—";
-  return Math.max(...values).toFixed(3);
-}
-
 function bundleToModelInfos(bundle: ModelBundle): ModelInfo[] {
   return bundle.available_models.map((name) => ({
     name,
@@ -218,7 +210,6 @@ function PredictPage() {
                     {bundle.available_models.length} classifier
                     {bundle.available_models.length === 1 ? "" : "s"}
                   </span>
-                  <span>ROC-AUC {bestRocAuc(bundle.metrics)}</span>
                 </div>
                 <p className="text-xs text-text-muted">{formatDate(bundle.created_at)}</p>
               </div>
