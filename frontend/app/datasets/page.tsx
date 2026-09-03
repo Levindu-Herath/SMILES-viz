@@ -335,7 +335,7 @@ function DatasetsPage() {
     return (
       <main className="min-h-screen bg-surface-bg text-text-primary">
         <div className="mx-auto max-w-4xl px-6 py-16">
-          <div className="flex flex-col items-center justify-center rounded-xl border border-surface-border bg-surface-card p-12 text-center">
+          <div className="flex flex-col items-center justify-center rounded-xl border border-surface-border bg-surface-card p-12 text-center shadow-card">
             <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-surface-bg text-text-muted">
               <LockIcon />
             </div>
@@ -391,7 +391,7 @@ function DatasetsPage() {
         )}
 
         {!loading && datasets.length === 0 && (
-          <div className="rounded-lg border border-surface-border bg-surface-card p-10 text-center">
+          <div className="rounded-lg border border-surface-border bg-surface-card p-10 text-center shadow-card">
             <p className="text-sm text-text-muted">
               No datasets uploaded yet. Upload your first dataset to get started.
             </p>
@@ -404,7 +404,7 @@ function DatasetsPage() {
               <div
                 key={dataset.id}
                 onClick={() => setSelectedDataset(dataset)}
-                className="rounded-lg border border-surface-border bg-surface-card p-5 flex flex-col sm:flex-row sm:items-center gap-4 cursor-pointer hover:border-primary-200 transition-colors duration-150"
+                className="rounded-lg border border-surface-border bg-surface-card p-5 flex flex-col sm:flex-row sm:items-center gap-4 cursor-pointer hover:border-primary-200 transition-colors duration-150 shadow-card"
               >
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">

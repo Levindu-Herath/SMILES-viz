@@ -209,6 +209,24 @@ export async function publishModel(archive: Blob, name: string): Promise<void> {
   }
 }
 
+export async function deleteModel(modelId: string): Promise<void> {
+  const headers = await getAuthHeaders();
+
+  const res = await fetch(`${getApiBase()}/api/models/${modelId}`, {
+    method: "DELETE",
+    headers,
+  });
+
+  if (res.status === 401) {
+    throw new ApiError("Sign in required for this feature.", 401);
+  }
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new ApiError(body.detail || `Server error: ${res.status}`, res.status);
+  }
+}
+
 export async function uploadDataset(
   file: File,
   name: string,

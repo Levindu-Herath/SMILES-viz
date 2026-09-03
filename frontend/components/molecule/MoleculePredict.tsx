@@ -323,8 +323,8 @@ export function MoleculePredict({
                   aria-pressed={isSelected}
                   className={`text-left rounded-lg border py-2.5 px-3 transition-all duration-150 ${
                     isSelected
-                      ? "border-primary-500 bg-primary-50 ring-1 ring-primary-200"
-                      : "border-surface-border bg-surface-card hover:border-primary-200 hover:bg-primary-50/50"
+                      ? "border-primary-500 bg-surface-selected ring-1 ring-primary-200 shadow-card"
+                      : "border-surface-border bg-surface-card hover:border-primary-200 hover:bg-primary-50/50 shadow-card"
                   }`}
                 >
                   <div className="flex items-center gap-2 min-w-0">
@@ -397,8 +397,8 @@ export function MoleculePredict({
                     }}
                     className={`rounded-lg border py-2.5 px-3 transition-all duration-150 ${
                       isSelected
-                        ? "border-primary-300 bg-primary-50 ring-1 ring-primary-200"
-                        : "border-surface-border bg-surface-card hover:border-primary-200 hover:bg-primary-50/50"
+                        ? "border-primary-300 bg-surface-selected ring-1 ring-primary-200 shadow-card"
+                        : "border-surface-border bg-surface-card hover:border-primary-200 hover:bg-primary-50/50 shadow-card"
                     } ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
                   >
                     <div className="flex items-center justify-between gap-2">
@@ -454,7 +454,7 @@ export function MoleculePredict({
       {!loading && predictionResult && (
         <div className="animate-fade-in space-y-6">
           {/* 1. Prediction result */}
-          <div className="rounded-lg border border-surface-border bg-surface-card p-5 space-y-4">
+          <div className="rounded-lg border border-surface-border bg-surface-card p-5 space-y-4 shadow-card">
             <div>
               <div className="flex items-baseline gap-3">
                 <p
@@ -517,7 +517,7 @@ export function MoleculePredict({
 
           {/* 2. Heatmaps — which atoms / substructures drove this prediction (reference model only) */}
           {enableHeatmap && (
-            <div className="rounded-lg border border-surface-border bg-surface-card p-5 space-y-4">
+            <div className="rounded-lg border border-surface-border bg-surface-card p-5 space-y-4 shadow-card">
               <div>
                 <h2 className="text-sm font-medium text-text-primary">Why this prediction?</h2>
                 <p className="text-xs text-text-secondary mt-0.5">
@@ -656,14 +656,14 @@ export function MoleculePredict({
             <div className="grid gap-4 lg:grid-cols-[1fr_1fr]">
               <div className="space-y-3">
                 {predictMoleculeData ? (
-                  <div className="rounded-lg bg-surface-card border border-surface-border p-4 flex items-center justify-center max-h-[280px] overflow-hidden">
+                  <div className="rounded-lg bg-surface-card border border-surface-border p-4 flex items-center justify-center max-h-[280px] overflow-hidden shadow-card">
                     <div
                       className="w-full h-full flex items-center justify-center [&>svg]:max-w-full [&>svg]:max-h-[240px] [&>svg]:h-auto [&>svg]:object-contain"
                       dangerouslySetInnerHTML={{ __html: predictMoleculeData.svg }}
                     />
                   </div>
                 ) : (
-                  <div className="rounded-lg border border-surface-border bg-surface-card p-6 max-h-[280px] flex items-center justify-center">
+                  <div className="rounded-lg border border-surface-border bg-surface-card p-6 max-h-[280px] flex items-center justify-center shadow-card">
                     <p className="text-sm text-text-muted text-center">
                       Molecule visualization unavailable.
                     </p>
@@ -672,7 +672,7 @@ export function MoleculePredict({
               </div>
 
               {predictMoleculeData && (
-                <div className="rounded-lg border border-surface-border bg-surface-card p-4 grid grid-cols-2 gap-x-4 content-start">
+                <div className="rounded-lg border border-surface-border bg-surface-card p-4 grid grid-cols-2 gap-x-4 content-start shadow-card">
                   <PropRow label="Formula" value={predictMoleculeData.physicochemical.formula} />
                   <PropRow
                     label="Molecular weight"
@@ -688,7 +688,7 @@ export function MoleculePredict({
           )}
 
           {/* Pipeline info */}
-          <div className="rounded-lg border border-surface-border bg-surface-card p-4">
+          <div className="rounded-lg border border-surface-border bg-surface-card p-4 shadow-card">
             <h2 className="text-sm font-medium text-text-secondary mb-2">Pipeline</h2>
             <p className="text-xs font-mono text-text-muted leading-relaxed">
               SMILES → Graph → WL kernel → FDDL sparse coding → MaxAbsScaler →{" "}

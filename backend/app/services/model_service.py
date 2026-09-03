@@ -12,6 +12,7 @@ keyed by model id.
 
 import io
 import json
+import shutil
 import tarfile
 import threading
 import uuid
@@ -108,6 +109,24 @@ def get_model(model_id: str) -> Optional[dict]:
     client = _get_client()
     result = client.table(TABLE_NAME).select("*").eq("id", model_id).limit(1).execute()
     return result.data[0] if result.data else None
+
+
+def delete_model(model_id: str, user_id: str) -> None:
+    """Delete a published model's file, row, and any cached/loaded predictor.
+    Raises ValueError if not found, PermissionError if not the owner."""
+    row = get_model(model_id)
+    if row is None:
+        raise ValueError("Model not found.")
+    if row["user_id"] != user_id:
+        raise PermissionError("You do not have permission to delete this model.")
+
+    client = _get_client()
+    client.storage.from_(BUCKET_NAME).remove([row["file_path"]])
+    client.table(TABLE_NAME).delete().eq("id", model_id).execute()
+
+    with _predictors_lock:
+        _predictors.pop(model_id, None)
+    shutil.rmtree(CACHE_ROOT / model_id, ignore_errors=True)
 
 
 def _extract_bundle(file_path: str, cache_dir: Path) -> None:

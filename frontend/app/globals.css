@@ -14,10 +14,14 @@
   --color-primary-900: #0f2620;
 
   /* Surfaces */
-  --color-surface-bg: #f7fafa;
+  --color-surface-bg: #e8f0ed;
   --color-surface-card: #ffffff;
-  --color-surface-border: #e0efed;
+  --color-surface-border: #c2d5ce;
   --color-surface-hover: #d4e8e3;
+  --color-surface-selected: #f2faf7;
+
+  /* Elevation */
+  --shadow-card: 0 1px 2px 0 rgb(16 44 38 / 0.05), 0 6px 16px -8px rgb(16 44 38 / 0.14);
 
   /* Text */
   --color-text-primary: #1a3a33;

@@ -40,3 +40,17 @@ def publish_model(
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc))
     return PublishResponse(model=ModelBundleResponse(**row), message="Model published successfully.")
+
+
+@router.delete("/{model_id}")
+def delete_model(model_id: str, user: dict = Depends(get_current_user)):
+    """Auth required — only the owner may delete their published model."""
+    if user is None:
+        raise HTTPException(status_code=401, detail="Sign in required.")
+    try:
+        model_service.delete_model(model_id, user["id"])
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
+    except PermissionError as exc:
+        raise HTTPException(status_code=403, detail=str(exc))
+    return {"message": "Model deleted successfully."}
