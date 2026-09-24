@@ -10,6 +10,7 @@ const NAV_ITEMS = [
   { label: "Train", href: "/train" },
   { label: "My Models", href: "/predict" },
   { label: "About us", href: "/about" },
+  { label: "FAQ", href: "/faq" },
 ] as const;
 
 export function Navbar() {
