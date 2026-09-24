@@ -131,7 +131,8 @@ function PredictPage() {
           <MoleculePredict
             modelId={selected.id}
             fixedModel={selected.default_model}
-            enableHeatmap={false}
+            enableHeatmap={true}
+            showPredictionExplanation={false}
           />
         </div>
       </main>

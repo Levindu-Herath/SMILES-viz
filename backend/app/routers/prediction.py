@@ -68,17 +68,13 @@ def predict_heatmap(
     req: PredictionRequest,
     user: Optional[dict] = Depends(get_current_user),
 ):
-    """Auth optional. Per-atom importance heatmap explaining a prediction.
-
-    Only available for the reference model — the interpretability pipeline is
-    wired to its specific WL/FDDL artifacts, not to arbitrary published bundles.
-    """
-    if req.model_id not in (None, "reference"):
-        raise HTTPException(
-            status_code=400, detail="Heatmap is only available for the reference model."
-        )
+    """Auth optional. Per-atom importance heatmap explaining a prediction."""
+    predictor = _resolve_predictor(req.model_id, req.disease)
     try:
-        result = compute_prediction_heatmap(req.smiles, req.model_name, req.disease)
+        result = compute_prediction_heatmap(
+            req.smiles, req.model_name, req.disease,
+            predictor=predictor,
+        )
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc))
     return result

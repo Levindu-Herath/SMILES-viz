@@ -28,7 +28,7 @@ import networkx as nx
 
 from app.core.config import settings
 from interpretability.wl_aksvd_interpreter import WLAKSVDInterpreter
-from ml_pipeline.inference import get_predictor
+from ml_pipeline.inference import MolecularActivityPredictor, get_predictor
 
 # rdkit and matplotlib are imported lazily inside compute_prediction_heatmap()
 # (and the render helpers it calls), matching ml_pipeline.inference's
@@ -58,6 +58,17 @@ def _get_interpreter(disease_id: str, model_name: str) -> WLAKSVDInterpreter:
                     label_map=_LABEL_MAP,
                 )
     return _interpreters[key]
+
+
+def _build_interpreter(predictor, model_name: str) -> WLAKSVDInterpreter:
+    """Build an interpreter directly from a predictor instance."""
+    return WLAKSVDInterpreter(
+        wl=predictor.encoder,
+        aksvd=predictor.dict_learner,
+        classifier=predictor.model_for(model_name),
+        scaler=predictor.scaler,
+        label_map=_LABEL_MAP,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -309,6 +320,7 @@ def compute_prediction_heatmap(
     top_n_substructures: int = 5,
     width: int = 450,
     height: int = 350,
+    predictor: Optional["MolecularActivityPredictor"] = None,
 ) -> dict:
     """Score A and Score B heatmaps (notebook's visualise_subtrees pairing)
     for the same graph/model the /api/predict endpoint just scored: the top
@@ -318,10 +330,11 @@ def compute_prediction_heatmap(
     from rdkit import Chem
     from rdkit.Chem import AllChem
 
-    disease_id = disease_id or settings.default_disease_id
-    predictor = get_predictor(disease_id)
+    if predictor is None:
+        disease_id = disease_id or settings.default_disease_id
+        predictor = get_predictor(disease_id)
     model_name = model_name or predictor.default_model
-    interpreter = _get_interpreter(disease_id, model_name)
+    interpreter = _build_interpreter(predictor, model_name)
 
     graph = predictor.graph_for(smiles)
     importance = interpreter.get_node_importance(graph, top_k_atoms=top_k_atoms)
