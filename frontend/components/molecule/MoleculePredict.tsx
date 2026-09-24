@@ -26,8 +26,9 @@ interface MoleculePredictProps {
   fixedModel?: string; // when set: hide the selector, run this model on Predict
   diseases?: DiseaseInfo[]; // reference/Analyze only; enables the cancer-type selector
   defaultDisease?: string;
-  enableHeatmap?: boolean; // true only in Analyze
+  enableHeatmap?: boolean;
   showMoleculePreview?: boolean; // Analyze shows the 2D structure; Predict optional
+  showPredictionExplanation?: boolean; // Analyze shows the sentence; My Models hides it
 }
 
 // The backend treats auth as optional, but some features may still require it —
@@ -154,6 +155,7 @@ export function MoleculePredict({
   defaultDisease,
   enableHeatmap = false,
   showMoleculePreview = false,
+  showPredictionExplanation = true,
 }: MoleculePredictProps) {
   const [smiles, setSmiles] = useState("");
   const [loading, setLoading] = useState(false);
@@ -482,11 +484,13 @@ export function MoleculePredict({
                 </p>
                 <p className="text-xs text-text-muted">probability</p>
               </div>
-              <p className="mt-2 text-sm text-text-secondary">
-                {predictionResult.prediction === "Active"
-                  ? "This molecule is predicted to inhibit cancer cell growth — a candidate anti-cancer compound."
-                  : "This molecule is predicted to show no significant anti-cancer activity in this screen."}
-              </p>
+              {showPredictionExplanation && (
+                <p className="mt-2 text-sm text-text-secondary">
+                  {predictionResult.prediction === "Active"
+                    ? "This molecule is predicted to inhibit cancer cell growth — a candidate anti-cancer compound."
+                    : "This molecule is predicted to show no significant anti-cancer activity in this screen."}
+                </p>
+              )}
             </div>
 
             <div className="relative h-2 rounded-full bg-primary-50 w-full">
