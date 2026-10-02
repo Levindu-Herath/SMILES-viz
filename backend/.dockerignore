@@ -1,8 +1,35 @@
-__pycache__/
-*.pyc
+# --- VCS / editor ---
+**/.git
+**/.gitignore
+.vscode/
+.idea/
+
+# --- Python caches & virtualenvs ---
+**/__pycache__
+**/*.pyc
+**/*.pyo
+venv/
 .venv/
-.env
+
+# --- Secrets: env comes from Compose at runtime, never baked in ---
+.env*
+
+# --- Local runtime data / logs ---
+artifacts/published/
+*.log
 *.bak
+
+# --- sparsegraphs: keep code, drop research outputs ---
 sparsegraphs/results/
+sparsegraphs/**/*.ipynb
+sparsegraphs/*.md
+
+# Ship ONLY the bundles listed in app/core/config.py REFERENCE_DISEASES.
+# Adding a disease there? Add a matching "!" line here too.
+sparsegraphs/artifacts/*
+!sparsegraphs/artifacts/wl_fddl_gpu_nci_full_atoms4096_20260719_123451_20260719_142411
+!sparsegraphs/artifacts/wl_fddl_gpu_nci_full_id41_atoms4096_20260902_025157_20260902_025843
+!sparsegraphs/artifacts/wl_fddl_gpu_nci_full_id33_atoms4096_20260902_152156_20260902_153206
+# ...then drop the parts of those bundles the API never reads.
 sparsegraphs/artifacts/*/code_cache/
 sparsegraphs/artifacts/*/eval/

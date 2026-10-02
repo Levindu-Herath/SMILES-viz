@@ -18,8 +18,12 @@ frontend/out/
 .DS_Store
 Thumbs.db
 
-# Environment variables
-.env
-.env.local*.joblib 
-*.npy 
-*.npz 
+# Environment variables (secrets) — ignore every .env variant, keep the template
+.env*
+!.env.example
+
+# Model / array artifacts
+*.joblib
+*.npy
+*.npz
+
