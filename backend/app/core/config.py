@@ -68,7 +68,7 @@ class Settings(BaseSettings):
                     return decoded
             except json.JSONDecodeError:
                 pass
-            return [origin.strip() for origin in v.split(",") if origin.strip()]
+            return [origin.strip().rstrip("/") for origin in v.split(",") if origin.strip()]
         return v
 
     # Server

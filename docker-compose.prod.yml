@@ -1,0 +1,45 @@
+# Production stack for the EC2 box. Nginx runs on the HOST and proxies to the
+# loopback-only ports below. Run with:
+#   docker compose --env-file .env.prod -f docker-compose.prod.yml up -d
+name: smiles-viz
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  backend:
+    image: ${BACKEND_IMAGE:?set BACKEND_IMAGE in .env.prod}
+    ports:
+      - "127.0.0.1:8000:8000"
+    environment:
+      SUPABASE_URL: ${SUPABASE_URL:?set SUPABASE_URL in .env.prod}
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY:?set SUPABASE_SERVICE_ROLE_KEY in .env.prod}
+      CORS_ORIGINS: ${CORS_ORIGINS:?set CORS_ORIGINS in .env.prod}
+      DEBUG: ${DEBUG:-false}
+      # Trust X-Forwarded-* from Nginx. Safe: the port is bound to loopback only.
+      FORWARDED_ALLOW_IPS: "*"
+    volumes:
+      - published-models:/app/artifacts/published
+    healthcheck:
+      test: ["CMD", "/opt/conda/bin/python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health', timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
+    logging: *default-logging
+    restart: unless-stopped
+
+  frontend:
+    image: ${FRONTEND_IMAGE:?set FRONTEND_IMAGE in .env.prod}
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      - backend
+    logging: *default-logging
+    restart: unless-stopped
+
+volumes:
+  published-models:

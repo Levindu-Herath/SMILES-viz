@@ -20,7 +20,7 @@ Thumbs.db
 
 # Environment variables (secrets) — ignore every .env variant, keep the template
 .env*
-!.env.example
+!.env*.example
 
 # Model / array artifacts
 *.joblib
