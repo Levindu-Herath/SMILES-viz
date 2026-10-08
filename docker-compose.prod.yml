@@ -1,6 +1,8 @@
 # Production stack for the EC2 box. Nginx runs on the HOST and proxies to the
 # loopback-only ports below. Run with:
 #   docker compose --env-file .env.prod -f docker-compose.prod.yml up -d
+# Which version runs is set by IMAGE_TAG (a full git SHA) in .env.prod;
+# scripts/deploy.sh rewrites it on every deploy and rollback.
 name: smiles-viz
 
 x-logging: &default-logging
@@ -11,7 +13,7 @@ x-logging: &default-logging
 
 services:
   backend:
-    image: ${BACKEND_IMAGE:?set BACKEND_IMAGE in .env.prod}
+    image: ${ECR_REGISTRY:?set ECR_REGISTRY in .env.prod}/smiles-viz-backend:${IMAGE_TAG:?set IMAGE_TAG in .env.prod}
     ports:
       - "127.0.0.1:8000:8000"
     environment:
@@ -33,7 +35,7 @@ services:
     restart: unless-stopped
 
   frontend:
-    image: ${FRONTEND_IMAGE:?set FRONTEND_IMAGE in .env.prod}
+    image: ${ECR_REGISTRY:?set ECR_REGISTRY in .env.prod}/smiles-viz-frontend:${IMAGE_TAG:?set IMAGE_TAG in .env.prod}
     ports:
       - "127.0.0.1:3000:3000"
     depends_on:
