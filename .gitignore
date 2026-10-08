@@ -4,6 +4,9 @@ backend/__pycache__/
 *.pyc
 *.pyo
 backend/artifacts/published/
++.pytest_cache/
++.ruff_cache/
+
 
 # Node / Next.js
 frontend/node_modules/
