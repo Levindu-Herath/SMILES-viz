@@ -39,7 +39,9 @@ def publish_model(
         )
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc))
-    return PublishResponse(model=ModelBundleResponse(**row), message="Model published successfully.")
+    return PublishResponse(
+        model=ModelBundleResponse(**row), message="Model published successfully."
+    )
 
 
 @router.delete("/{model_id}")

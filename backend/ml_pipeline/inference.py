@@ -190,9 +190,7 @@ class MolecularActivityPredictor:
 
         model_name = model_name or self._default_model
         if model_name not in self._models:
-            raise ValueError(
-                f"Unknown model '{model_name}'. Available: {sorted(self._models)}"
-            )
+            raise ValueError(f"Unknown model '{model_name}'. Available: {sorted(self._models)}")
 
         graph = self._smiles_to_graph(smiles)
         embeddings = self._encoder.generate_inferencing_embeddings([graph])

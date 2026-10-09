@@ -36,7 +36,11 @@ def _fetch_jwks() -> list[dict]:
 
 def _get_jwks(force_refresh: bool = False) -> list[dict]:
     now = time.time()
-    if not force_refresh and _jwks_cache["keys"] and now - _jwks_cache["fetched_at"] < _JWKS_CACHE_TTL_SECONDS:
+    if (
+        not force_refresh
+        and _jwks_cache["keys"]
+        and now - _jwks_cache["fetched_at"] < _JWKS_CACHE_TTL_SECONDS
+    ):
         return _jwks_cache["keys"]
 
     try:

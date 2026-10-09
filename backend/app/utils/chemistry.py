@@ -79,7 +79,9 @@ def check_egan(logp: float, tpsa: float) -> RuleResult:
     return RuleResult(passes=len(violations) == 0, violations=len(violations), details=violations)
 
 
-def check_muegge(mol, mw: float, logp: float, tpsa: float, rb: int, hba: int, hbd: int) -> RuleResult:
+def check_muegge(
+    mol, mw: float, logp: float, tpsa: float, rb: int, hba: int, hbd: int
+) -> RuleResult:
     violations = []
     ring_count = Descriptors.RingCount(mol)
     num_carbons = sum(1 for a in mol.GetAtoms() if a.GetAtomicNum() == 6)

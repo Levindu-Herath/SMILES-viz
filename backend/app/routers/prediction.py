@@ -36,7 +36,7 @@ _MODEL_METRICS = {
 
 
 def _resolve_predictor(model_id: str, disease_id: Optional[str] = None):
-    """"reference" uses a built-in per-disease bundle; any other id is a
+    """ "reference" uses a built-in per-disease bundle; any other id is a
     published bundle (disease-agnostic)."""
     if model_id in (None, "reference"):
         try:
@@ -72,7 +72,9 @@ def predict_heatmap(
     predictor = _resolve_predictor(req.model_id, req.disease)
     try:
         result = compute_prediction_heatmap(
-            req.smiles, req.model_name, req.disease,
+            req.smiles,
+            req.model_name,
+            req.disease,
             predictor=predictor,
         )
     except ValueError as exc:

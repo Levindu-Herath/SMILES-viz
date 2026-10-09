@@ -12,6 +12,7 @@ def _load_sa_scorer() -> Optional[Callable]:
     """Attempt to load the SA Score function from RDKit Contrib."""
     try:
         from rdkit.Contrib.SA_Score import sascorer
+
         return sascorer.calculateScore
     except Exception:
         pass

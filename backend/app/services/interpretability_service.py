@@ -81,9 +81,20 @@ def _build_interpreter(predictor, model_name: str) -> WLAKSVDInterpreter:
 # ---------------------------------------------------------------------------
 
 _ATOMIC_SYMBOLS = {
-    "1": "H", "5": "B", "6": "C", "7": "N", "8": "O", "9": "F",
-    "14": "Si", "15": "P", "16": "S", "17": "Cl", "33": "As", "34": "Se",
-    "35": "Br", "53": "I",
+    "1": "H",
+    "5": "B",
+    "6": "C",
+    "7": "N",
+    "8": "O",
+    "9": "F",
+    "14": "Si",
+    "15": "P",
+    "16": "S",
+    "17": "Cl",
+    "33": "As",
+    "34": "Se",
+    "35": "Br",
+    "53": "I",
 }
 
 
@@ -177,7 +188,9 @@ def _build_token_colour_map(sorted_tokens: list, top_n: int, floor: float = 0.35
     return colours
 
 
-def _expand_to_atoms(token_colour_map: dict, token_members: dict, sorted_tokens: list, n_heavy_atoms: int) -> dict:
+def _expand_to_atoms(
+    token_colour_map: dict, token_members: dict, sorted_tokens: list, n_heavy_atoms: int
+) -> dict:
     atom_colours: dict[int, tuple] = {}
     for tok, _ in sorted_tokens:
         colour = token_colour_map.get(tok)
@@ -210,8 +223,10 @@ def _render_molecule(mol, colour_map: dict, size: tuple[int, int]):
     drawer.drawOptions().useBWAtomPalette()
     drawer.DrawMolecule(
         mol,
-        highlightAtoms=h_atoms, highlightAtomColors=h_aclrs,
-        highlightBonds=h_bonds, highlightBondColors=h_bclrs,
+        highlightAtoms=h_atoms,
+        highlightAtomColors=h_aclrs,
+        highlightBonds=h_bonds,
+        highlightBondColors=h_bclrs,
     )
     drawer.FinishDrawing()
     return Image.open(io.BytesIO(drawer.GetDrawingText()))
@@ -228,11 +243,14 @@ def _truncated_cmap(name: str, lo: float = 0.35, hi: float = 1.0, n: int = 256):
     )
 
 
-def _render_with_colourbar(img, sorted_tokens: list, top_n: int, title: str, floor: float = 0.35) -> str:
+def _render_with_colourbar(
+    img, sorted_tokens: list, top_n: int, title: str, floor: float = 0.35
+) -> str:
     """Molecule image + red/blue score colorbar(s), matching the notebook's
     _show_with_colourbar -- returns a base64 PNG data URI instead of
     plt.show()'ing it."""
     import matplotlib
+
     matplotlib.use("Agg")
     import matplotlib.colors as mcolors
     import matplotlib.pyplot as plt
@@ -246,7 +264,8 @@ def _render_with_colourbar(img, sorted_tokens: list, top_n: int, title: str, flo
     ratios = [w] + [30] * n_bars
 
     fig, axes = plt.subplots(
-        1, 1 + n_bars,
+        1,
+        1 + n_bars,
         figsize=(w / 96 + n_bars * 1.4, h / 96),
         gridspec_kw={"width_ratios": ratios},
     )
@@ -296,7 +315,9 @@ def _render_with_colourbar(img, sorted_tokens: list, top_n: int, title: str, flo
     return f"data:image/png;base64,{encoded}"
 
 
-def _top_substructures(sorted_tokens: list, token_colours: dict, token_desc: dict, token_members: dict) -> list[dict]:
+def _top_substructures(
+    sorted_tokens: list, token_colours: dict, token_desc: dict, token_members: dict
+) -> list[dict]:
     total = sum(abs(s) for _, s in sorted_tokens) or 1.0
     return [
         {
@@ -370,11 +391,15 @@ def compute_prediction_heatmap(
     img_b = _render_molecule(mol, atom_colours_b, (width, height))
 
     score_a_heatmap_png = _render_with_colourbar(
-        img_a, sorted_tok_a, top_n_substructures,
+        img_a,
+        sorted_tok_a,
+        top_n_substructures,
         title="Score A  (atom_contribution × dict_weight)",
     )
     score_b_heatmap_png = _render_with_colourbar(
-        img_b, sorted_tok_b, top_n_substructures,
+        img_b,
+        sorted_tok_b,
+        top_n_substructures,
         title="Score B  (Score A × wl_feature_count)",
     )
 
@@ -384,7 +409,11 @@ def compute_prediction_heatmap(
         "prediction": importance["prediction"],
         "confidence": importance["confidence"],
         "score_a_heatmap_png": score_a_heatmap_png,
-        "top_substructures_a": _top_substructures(sorted_tok_a, token_colours_a, token_desc, token_members),
+        "top_substructures_a": _top_substructures(
+            sorted_tok_a, token_colours_a, token_desc, token_members
+        ),
         "score_b_heatmap_png": score_b_heatmap_png,
-        "top_substructures_b": _top_substructures(sorted_tok_b, token_colours_b, token_desc, token_members),
+        "top_substructures_b": _top_substructures(
+            sorted_tok_b, token_colours_b, token_desc, token_members
+        ),
     }
