@@ -8,8 +8,6 @@ from typing import Optional
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 
 from app.core.auth import get_current_user
-
-ANONYMOUS_USER_ID = "anonymous"
 from app.schemas.dataset import (
     DatasetListResponse,
     DatasetResponse,
@@ -17,6 +15,8 @@ from app.schemas.dataset import (
     UploadResponse,
 )
 from app.services import dataset_service
+
+ANONYMOUS_USER_ID = "anonymous"
 
 router = APIRouter(prefix="/api/datasets", tags=["datasets"])
 

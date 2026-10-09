@@ -11,9 +11,8 @@ JWKS from Supabase and verify each token against the matching key.
 import json
 import time
 import urllib.request
-from urllib.error import URLError
-
 from typing import Optional
+from urllib.error import URLError
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
