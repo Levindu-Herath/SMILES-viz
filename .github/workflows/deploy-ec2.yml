@@ -1,0 +1,82 @@
+name: Deploy to EC2 (reusable)
+
+on:
+  workflow_call:                                   
+    inputs:
+      tag:
+        description: Full 40-char git SHA whose images to run
+        required: true
+        type: string
+
+jobs:
+  deploy:
+    name: Deploy to EC2
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+          role-session-name: gha-${{ github.run_id }}
+
+      - name: Run scripts/deploy.sh on the box via SSM
+        env:
+          INSTANCE_ID: ${{ vars.EC2_INSTANCE_ID }}
+          TAG: ${{ inputs.tag }}                   
+          REPO: ${{ github.repository }}
+        run: |
+          script_url="https://raw.githubusercontent.com/$REPO/$TAG/scripts/deploy.sh"
+          cmd="sudo -u ubuntu -H bash -c 'cd ~/smiles-viz && curl -fsSL $script_url -o deploy.sh && bash deploy.sh $TAG'"
+          params=$(jq -n --arg c "$cmd" '{commands: [$c], executionTimeout: ["600"]}')
+
+          command_id=$(aws ssm send-command \
+            --instance-ids "$INSTANCE_ID" \
+            --document-name AWS-RunShellScript \
+            --comment "deploy ${TAG:0:7} (run ${{ github.run_id }})" \
+            --parameters "$params" \
+            --query Command.CommandId --output text)
+          echo "SSM command: $command_id"
+
+          status=Pending
+          for _ in $(seq 1 60); do
+            sleep 10
+            status=$(aws ssm get-command-invocation --command-id "$command_id" \
+              --instance-id "$INSTANCE_ID" --query Status --output text 2>/dev/null || echo Pending)
+            echo "status: $status"
+            case "$status" in Pending|InProgress|Delayed) ;; *) break ;; esac
+          done
+
+          echo "----- output from the box -----"
+          aws ssm get-command-invocation --command-id "$command_id" --instance-id "$INSTANCE_ID" \
+            --query '[StandardOutputContent, StandardErrorContent]' --output text
+          test "$status" = Success
+
+  health-check:
+    name: Health check (public URL)
+    needs: deploy
+    runs-on: ubuntu-latest
+    env:
+      BASE_URL: ${{ vars.PUBLIC_URL }}
+      TAG: ${{ inputs.tag }}                       
+    steps:
+      - name: Wait for the site to answer over HTTPS
+        run: |
+          check() {
+            curl -sL -o /dev/null -w '%{http_code}' --max-time 10 "$1" || true
+          }
+          for i in $(seq 1 6); do
+            api=$(check "$BASE_URL/api/health")
+            web=$(check "$BASE_URL/")
+            echo "attempt $i: /api/health -> $api, / -> $web"
+            if [ "$api" = 200 ] && [ "$web" = 200 ]; then
+              echo "::notice::$BASE_URL is serving ${TAG:0:7}"
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "::error::$BASE_URL did not return 200 on /api/health and / within 60 s"
+          exit 1
