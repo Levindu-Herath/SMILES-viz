@@ -49,7 +49,7 @@ Check: IAM → Identity providers → click `token.actions.githubusercontent.com
 **Audiences** `sts.amazonaws.com`. (CLI: `aws iam get-open-id-connect-provider --open-id-connect-provider-arn <that ARN>`
 → `"ClientIDList": ["sts.amazonaws.com"]`.)
 
-## 2. Deploy role for GitHub Actions
+## 2. Deploy role for the GitHub Actions
 
 IAM → **Roles** → **Create role** → **Custom trust policy**, paste:
 
