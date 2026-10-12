@@ -1,0 +1,59 @@
+name: Rollback
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Full 40-char git SHA to redeploy (its images must already be in ECR)
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  check:
+    name: Check the release exists
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      TAG: ${{ inputs.tag }}
+    steps:
+      - name: Validate SHA format
+        run: |
+          if [[ ! "$TAG" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::'$TAG' is not a full 40-char git SHA"
+            exit 1
+          fi
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+          role-session-name: gha-${{ github.run_id }}
+
+      - name: Both images are in ECR
+        run: |
+          for svc in backend frontend; do
+            if ! aws ecr describe-images --repository-name "smiles-viz-$svc" \
+                 --image-ids imageTag="$TAG" > /dev/null; then
+              echo "::error::smiles-viz-$svc:$TAG is not in ECR"
+              exit 1
+            fi
+          done
+
+  rollback:
+    needs: check
+    uses: ./.github/workflows/deploy-ec2.yml
+    with:
+      tag: ${{ inputs.tag }}
+    permissions:
+      contents: read
+      id-token: write

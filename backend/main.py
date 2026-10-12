@@ -4,7 +4,6 @@ Creates the FastAPI app, registers middleware and routers.
 """
 
 import os
-import sys
 
 _conda_prefix = os.environ.get("CONDA_PREFIX", "")
 if _conda_prefix:

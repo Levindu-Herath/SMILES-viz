@@ -17,9 +17,9 @@ BACKEND_DIR = Path(__file__).resolve().parents[2]
 
 @dataclass(frozen=True)
 class ReferenceDisease:
-    id: str            # stable slug used across the API and UI
-    label: str         # public-facing cancer-type name shown to users
-    nci_id: int        # NCI assay id (provenance shown as a small sublabel)
+    id: str  # stable slug used across the API and UI
+    label: str  # public-facing cancer-type name shown to users
+    nci_id: int  # NCI assay id (provenance shown as a small sublabel)
     artifact_dir: str  # bundle path relative to backend/ (or absolute)
 
 
@@ -68,7 +68,7 @@ class Settings(BaseSettings):
                     return decoded
             except json.JSONDecodeError:
                 pass
-            return [origin.strip() for origin in v.split(",") if origin.strip()]
+            return [origin.strip().rstrip("/") for origin in v.split(",") if origin.strip()]
         return v
 
     # Server

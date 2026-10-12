@@ -1,23 +1,29 @@
-FROM continuumio/miniconda3:latest
+# syntax=docker/dockerfile:1
+FROM mambaorg/micromamba:2.9.0-debian13-slim
 
+# Run every RUN step below inside the activated base env.
+ARG MAMBA_DOCKERFILE_ACTIVATE=1
+
+# 1. Conda layer: Python + RDKit from conda-forge.
+RUN micromamba install -y -n base -c conda-forge python=3.11 rdkit && \
+    micromamba clean --all --yes
+
+# 2. App dir owned by the non-root user (uploaded-model cache is written here).
+USER root
+RUN mkdir -p /app/artifacts/published && chown -R $MAMBA_USER:$MAMBA_USER /app
+USER $MAMBA_USER
 WORKDIR /app
 
-# Create conda environment with RDKit (no torch needed for inference)
-RUN conda create -n smiles-viz python=3.11 rdkit -c conda-forge -y && \
-    conda clean -afy
+# 3. Pip layer. The cache mount keeps downloaded wheels between rebuilds.
+COPY --chown=$MAMBA_USER:$MAMBA_USER requirements.txt .
+RUN --mount=type=cache,target=/home/mambauser/.cache/pip,uid=57439,gid=57439 \
+    pip install -r requirements.txt
 
-# Activate environment for subsequent commands
-SHELL ["conda", "run", "-n", "smiles-viz", "/bin/bash", "-c"]
+# 4. Application code (+ the 3 reference bundles allowed by .dockerignore).
+COPY --chown=$MAMBA_USER:$MAMBA_USER . .
 
-# Copy requirements and install pip dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
 
-# Copy application code (includes sparsegraphs submodule with artifacts)
-COPY . .
-
-# Expose port
 EXPOSE 8000
-
-# Run with conda environment activated
-CMD ["conda", "run", "--no-capture-output", "-n", "smiles-viz", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

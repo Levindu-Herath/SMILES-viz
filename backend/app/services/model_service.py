@@ -66,7 +66,9 @@ def _read_manifest_from_archive(contents: bytes) -> dict:
             with tar.extractfile(member) as f:  # type: ignore[union-attr]
                 return json.load(f)
     except (tarfile.TarError, KeyError, json.JSONDecodeError) as exc:
-        raise ValueError("Not a valid model bundle archive (missing/invalid manifest.json).") from exc
+        raise ValueError(
+            "Not a valid model bundle archive (missing/invalid manifest.json)."
+        ) from exc
 
 
 def publish_model(file: UploadFile, name: str, user_id: str) -> dict:

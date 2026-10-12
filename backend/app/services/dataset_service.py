@@ -104,9 +104,7 @@ def delete_dataset(dataset_id: str, user_id: str) -> None:
 
 def get_download_url(file_path: str) -> str:
     client = _get_client()
-    result = client.storage.from_(BUCKET_NAME).create_signed_url(
-        file_path, SIGNED_URL_EXPIRES_IN
-    )
+    result = client.storage.from_(BUCKET_NAME).create_signed_url(file_path, SIGNED_URL_EXPIRES_IN)
     url = result.get("signedURL") or result.get("signedUrl")
     if not url:
         raise ValueError("Failed to generate a download URL.")

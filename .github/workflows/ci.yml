@@ -1,0 +1,89 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches-ignore: [main]
+  workflow_call:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  backend-lint:
+    name: Backend lint (ruff)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Install ruff (version pinned in requirements-dev.txt)
+        run: pip install "$(grep '^ruff==' requirements-dev.txt)"
+
+      - name: ruff check
+        run: ruff check --output-format=github .
+
+      - name: ruff format --check
+        run: ruff format --check .
+
+  backend-test:
+    name: Backend tests (inside the production image)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          submodules: true
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build backend image
+        uses: docker/build-push-action@v6
+        with:
+          context: backend
+          load: true
+          tags: smiles-viz-backend:ci
+          cache-from: type=gha,scope=backend
+          cache-to: type=gha,mode=max,scope=backend
+
+      - name: pytest inside the image
+        run: >-
+          docker run --rm smiles-viz-backend:ci
+          sh -c "pip install -q -r requirements-dev.txt && python -m pytest -v -p no:cacheprovider"
+
+  frontend:
+    name: Frontend lint + build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - run: npm ci
+
+      - name: ESLint
+        run: npm run lint
+
+      - name: next build
+        run: npm run build
+        env:
+          NEXT_PUBLIC_API_URL: ""
+          NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder-anon-key
+          NEXT_TELEMETRY_DISABLED: 1

@@ -22,7 +22,6 @@ import numpy as np
 
 
 class WLAKSVDInterpreter:
-
     def __init__(
         self,
         wl: Any,
@@ -110,11 +109,13 @@ class WLAKSVDInterpreter:
                 "atom_idx": int(i),
                 "raw_contribution": float(contribs_active[i]),
                 "percentage": round(abs(contribs_active[i]) / total_abs * 100, 2)
-                              if total_abs > 0 else 0.0,
+                if total_abs > 0
+                else 0.0,
                 "direction": "supporting" if contribs_active[i] >= 0 else "opposing",
                 "activation": float(sparse_code[0][i]),
             }
-            for i in top_idx if contribs_active[i] != 0.0
+            for i in top_idx
+            if contribs_active[i] != 0.0
         ]
         return {
             "prediction": prediction,
@@ -145,18 +146,19 @@ class WLAKSVDInterpreter:
             word = self.vocab_words[fi]
             prevalence = {
                 self._label_name(cls): round(
-                    self.class_df[cls].get(word, 0)
-                    / max(self.class_counts[cls], 1) * 100, 2
+                    self.class_df[cls].get(word, 0) / max(self.class_counts[cls], 1) * 100, 2
                 )
                 for cls in self.unique_classes
             }
-            features.append({
-                "feature_id": int(fi),
-                "wl_token": word,
-                "atom_weight": round(float(weights[fi]), 6),
-                "discriminative_score": round(float(self.vocab_scores.get(word, 0.0)), 6),
-                "class_prevalence_pct": prevalence,
-            })
+            features.append(
+                {
+                    "feature_id": int(fi),
+                    "wl_token": word,
+                    "atom_weight": round(float(weights[fi]), 6),
+                    "discriminative_score": round(float(self.vocab_scores.get(word, 0.0)), 6),
+                    "class_prevalence_pct": prevalence,
+                }
+            )
         n_nonzero = int(np.count_nonzero(weights))
         return {
             "atom_idx": atom_idx,
@@ -177,9 +179,11 @@ class WLAKSVDInterpreter:
         lines = [
             sep,
             f"  PREDICTION   : {explanation['prediction_label']}",
-            (f"  CONFIDENCE   : {explanation['confidence'] * 100:.1f}%"
-             if explanation["confidence"] is not None
-             else "  CONFIDENCE   : N/A"),
+            (
+                f"  CONFIDENCE   : {explanation['confidence'] * 100:.1f}%"
+                if explanation["confidence"] is not None
+                else "  CONFIDENCE   : N/A"
+            ),
             f"  ACTIVE ATOMS : {explanation['n_active_atoms']}",
             sep,
             "  CONTRIBUTION BREAKDOWN          [S = Supporting | O = Opposing]",
@@ -207,8 +211,7 @@ class WLAKSVDInterpreter:
             self._label_name(cls): {
                 "doc_frequency": int(self.class_df[cls].get(word, 0)),
                 "prevalence_pct": round(
-                    self.class_df[cls].get(word, 0)
-                    / max(self.class_counts[cls], 1) * 100, 2
+                    self.class_df[cls].get(word, 0) / max(self.class_counts[cls], 1) * 100, 2
                 ),
             }
             for cls in self.unique_classes
@@ -229,6 +232,7 @@ class WLAKSVDInterpreter:
     def _build_token_node_map(self, graph) -> Dict[str, List]:
         """Re-run WL hashing and return {token_hash: [node_ids]}."""
         from graph_encoders.wlkernalsubtree import WeisfeilerLehmanHashing
+
         g = self.wl._check_graph(graph)
         wl_hash = WeisfeilerLehmanHashing(
             g, self.wl.wl_iterations, self.wl.attributed, self.wl.erase_base_features
@@ -282,15 +286,17 @@ class WLAKSVDInterpreter:
                 for node_id in node_ids:
                     node_imp_a[node_id] += path_a
                     node_imp_b[node_id] += path_b
-                    node_sources[node_id].append({
-                        "atom_idx": k,
-                        "token": token_str,
-                        "atom_contribution": round(atom_contrib, 6),
-                        "atom_weight": round(w, 6),
-                        "wl_coef": round(wl_coef, 6),
-                        "path_importance_a": round(path_a, 6),
-                        "path_importance_b": round(path_b, 6),
-                    })
+                    node_sources[node_id].append(
+                        {
+                            "atom_idx": k,
+                            "token": token_str,
+                            "atom_contribution": round(atom_contrib, 6),
+                            "atom_weight": round(w, 6),
+                            "wl_coef": round(wl_coef, 6),
+                            "path_importance_a": round(path_a, 6),
+                            "path_importance_b": round(path_b, 6),
+                        }
+                    )
 
         sorted_a = sorted(node_imp_a.items(), key=lambda x: abs(x[1]), reverse=True)
         sorted_b = sorted(node_imp_b.items(), key=lambda x: abs(x[1]), reverse=True)
@@ -300,12 +306,12 @@ class WLAKSVDInterpreter:
         return {
             "prediction": explanation["prediction_label"],
             "confidence": explanation["confidence"],
-            "sorted_nodes":        sorted_a,
-            "node_importance":     dict(node_imp_a),
-            "node_importance_pct": {nid: round(abs(s)/total_a*100, 2) for nid, s in sorted_a},
-            "sorted_nodes_b":         sorted_b,
-            "node_importance_b":      dict(node_imp_b),
-            "node_importance_b_pct":  {nid: round(abs(s)/total_b*100, 2) for nid, s in sorted_b},
+            "sorted_nodes": sorted_a,
+            "node_importance": dict(node_imp_a),
+            "node_importance_pct": {nid: round(abs(s) / total_a * 100, 2) for nid, s in sorted_a},
+            "sorted_nodes_b": sorted_b,
+            "node_importance_b": dict(node_imp_b),
+            "node_importance_b_pct": {nid: round(abs(s) / total_b * 100, 2) for nid, s in sorted_b},
             "node_sources": dict(node_sources),
         }
 
@@ -313,9 +319,7 @@ class WLAKSVDInterpreter:
     # Full text report  (Level 5 -> Level 1 -> Level 2)
     # ─────────────────────────────────────────────────────────────────────────
 
-    def full_report(
-        self, graph, top_k_atoms: int = 5, top_k_features_per_atom: int = 5
-    ) -> str:
+    def full_report(self, graph, top_k_atoms: int = 5, top_k_features_per_atom: int = 5) -> str:
         """Levels 5 + 1 + 2 as a formatted text report."""
         _, sparse_code = self._embed_graph(graph)
         scaled = self.scaler.transform(sparse_code)
@@ -323,8 +327,11 @@ class WLAKSVDInterpreter:
 
         lines: List[str] = [self.contribution_breakdown(explanation)]
 
-        conf_str = (f"  (Confidence: {explanation['confidence'] * 100:.1f}%)"
-                    if explanation["confidence"] is not None else "")
+        conf_str = (
+            f"  (Confidence: {explanation['confidence'] * 100:.1f}%)"
+            if explanation["confidence"] is not None
+            else ""
+        )
         lines += [
             "",
             "-- LEVEL 1: Prediction Reasoning --",
@@ -350,8 +357,7 @@ class WLAKSVDInterpreter:
             )
             for feat in info["top_features"]:
                 prev = "  ".join(
-                    f"{cls}: {pct}%"
-                    for cls, pct in feat["class_prevalence_pct"].items()
+                    f"{cls}: {pct}%" for cls, pct in feat["class_prevalence_pct"].items()
                 )
                 lines.append(
                     f"    Feature {feat['feature_id']:>6d}"
