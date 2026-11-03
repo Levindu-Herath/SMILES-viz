@@ -1,0 +1,28 @@
+# Top-level runtime deps (human-edited). requirements.txt is the lock
+# generated from this file; never edit the lock by hand.
+#
+# Regenerate the lock inside the image (Python/platform must match prod):
+#   docker build -t molytica-backend backend
+#   docker run --rm -u root -v "$PWD/backend:/src" -w /src molytica-backend sh -c \
+#     "pip install -q pip-tools && pip-compile --allow-unsafe --strip-extras \
+#        --no-emit-index-url -o requirements.txt requirements.in && pip-compile \
+#        --allow-unsafe --strip-extras --no-emit-index-url \
+#        -o requirements-dev.txt requirements-dev.in"
+# Add --upgrade (or --upgrade-package NAME) to move pins forward.
+fastapi>=0.115.0
+uvicorn>=0.30.0
+Pillow>=10.0.0
+matplotlib>=3.8.0
+pydantic-settings>=2.0.0
+python-jose[cryptography]>=3.3.0
+supabase>=2.0.0
+python-multipart>=0.0.9
+gensim==4.4.0
+networkx==3.6.1
+scikit-learn==1.9.0
+scipy>=1.13.0
+joblib==1.5.3
+numpy
+# conda-forge ships pip 26.2.2, whose vendored msgpack/urllib3 have HIGH CVEs;
+# 26.3 fixes them. Drop this once conda-lock.txt carries pip>=26.3.
+pip==26.3

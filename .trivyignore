@@ -1,0 +1,7 @@
+# Trivy ignore list, used by the image scans in .github/workflows/ci.yml.
+# One entry per line, each with a justification and an expiry (exp:) so it
+# gets re-reviewed instead of hiding forever. Fix > ignore: only list CVEs
+# with no available fix in our images.
+
+# setuptools 70.3.0 is pip's vendored copy (pip/_vendor/pkg_resources only), found via pip's bom.cdx.json; the vulnerable PackageIndex module is not shipped, real setuptools is 84.2.1, and the latest pip (26.3) still vendors 70.3.0.
+CVE-2025-47273 exp:2027-05-01

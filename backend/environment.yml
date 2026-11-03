@@ -1,0 +1,12 @@
+# Conda layer (human-edited): exact versions of the packages we ask for.
+# conda-lock.txt pins the full resolved set (incl. transitive libs) with
+# md5s and is what the Dockerfile installs. Regenerate it after editing:
+#   docker run --rm -v "$PWD/backend:/src" mambaorg/micromamba:<tag in Dockerfile> sh -c \
+#     "micromamba install -y -q -n base -f /src/environment.yml && \
+#      micromamba env export -n base --explicit --md5" > backend/conda-lock.txt
+name: base
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11.18
+  - rdkit=2026.09.1
