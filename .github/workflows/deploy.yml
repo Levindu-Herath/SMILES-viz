@@ -66,7 +66,7 @@ jobs:
         with:
           submodules: ${{ matrix.submodules }}
 
-      - uses: docker/setup-buildx-action@v3
+      - uses: docker/setup-buildx-action@v4
         if: steps.exists.outputs.found != 'true'
 
       - name: Build and push
