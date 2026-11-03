@@ -55,7 +55,7 @@ jobs:
 
       - name: Build backend image
         id: build
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: backend
           load: true
@@ -135,7 +135,7 @@ jobs:
       # scans is the one we'd ship (instead of a separate host-side build).
       - name: Build frontend image (next build)
         id: build
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: frontend
           load: true
