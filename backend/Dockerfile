@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 # Tag + digest pinned; Dependabot (docker ecosystem) proposes bumps.
-FROM mambaorg/micromamba:2.9.0-debian13-slim@sha256:7b93def90e48d6d7744938e31c29172e03b19bc9f56f0db512039f18efd21529
+FROM mambaorg/micromamba:2.10.0-debian13-slim@sha256:e1476182cd40eb1f7c0cfae4adec9bfd78f3d7f05c61368306abfdc8939c1198
 
 # Run every RUN step below inside the activated base env.
 ARG MAMBA_DOCKERFILE_ACTIVATE=1
