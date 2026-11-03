@@ -1,0 +1,7 @@
+# Dev/test tools. Constrained to the production lock so test deps never
+# drift from what the image ships. Regenerate requirements-dev.txt with
+# pip-compile (see requirements.in).
+-c requirements.txt
+pytest
+httpx
+ruff
