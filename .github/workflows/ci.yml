@@ -36,9 +36,16 @@ jobs:
       - name: ruff format --check
         run: ruff format --check .
 
+  # Image jobs also Trivy-scan the image they just built. Callers of this
+  # workflow (deploy.yml) must grant security-events: write for the SARIF upload.
+  # The SARIF steps run even when tests or the gate fail, so findings always
+  # reach the Security tab; fork PRs get a read-only token, so upload is skipped.
   backend-test:
     name: Backend tests (inside the production image)
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
     steps:
       - uses: actions/checkout@v5
         with:
@@ -47,6 +54,7 @@ jobs:
       - uses: docker/setup-buildx-action@v3
 
       - name: Build backend image
+        id: build
         uses: docker/build-push-action@v6
         with:
           context: backend
@@ -60,9 +68,50 @@ jobs:
           docker run --rm smiles-viz-backend:ci
           sh -c "pip install -q -r requirements-dev.txt && python -m pytest -v -p no:cacheprovider"
 
+      - name: Trivy SARIF report
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          version: v0.76.1
+          image-ref: smiles-viz-backend:ci
+          scanners: vuln
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          limit-severities-for-sarif: true
+          trivyignores: .trivyignore
+          format: sarif
+          output: trivy-backend.sarif
+          exit-code: "0"
+
+      - name: Upload SARIF to the Security tab
+        if: >-
+          ${{ !cancelled() && steps.build.outcome == 'success' &&
+          (github.event_name != 'pull_request' ||
+           github.event.pull_request.head.repo.full_name == github.repository) }}
+        uses: github/codeql-action/upload-sarif@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
+        with:
+          sarif_file: trivy-backend.sarif
+          category: trivy-backend
+
+      - name: Trivy gate (fail on fixable CRITICAL/HIGH)
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          version: v0.76.1
+          image-ref: smiles-viz-backend:ci
+          scanners: vuln
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          trivyignores: .trivyignore
+          format: table
+          exit-code: "1"
+
   frontend:
     name: Frontend lint + build
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
     defaults:
       run:
         working-directory: frontend
@@ -80,10 +129,58 @@ jobs:
       - name: ESLint
         run: npm run lint
 
-      - name: next build
-        run: npm run build
-        env:
-          NEXT_PUBLIC_API_URL: ""
-          NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder-anon-key
-          NEXT_TELEMETRY_DISABLED: 1
+      - uses: docker/setup-buildx-action@v3
+
+      # Runs next build inside the production Dockerfile, so the image Trivy
+      # scans is the one we'd ship (instead of a separate host-side build).
+      - name: Build frontend image (next build)
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: frontend
+          load: true
+          tags: smiles-viz-frontend:ci
+          build-args: |
+            NEXT_PUBLIC_API_URL=
+            NEXT_PUBLIC_SUPABASE_URL=https://placeholder.supabase.co
+            NEXT_PUBLIC_SUPABASE_ANON_KEY=ci-placeholder-anon-key
+          cache-from: type=gha,scope=frontend
+          cache-to: type=gha,mode=max,scope=frontend
+
+      - name: Trivy SARIF report
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          version: v0.76.1
+          image-ref: smiles-viz-frontend:ci
+          scanners: vuln
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          limit-severities-for-sarif: true
+          trivyignores: .trivyignore
+          format: sarif
+          output: trivy-frontend.sarif
+          exit-code: "0"
+
+      - name: Upload SARIF to the Security tab
+        if: >-
+          ${{ !cancelled() && steps.build.outcome == 'success' &&
+          (github.event_name != 'pull_request' ||
+           github.event.pull_request.head.repo.full_name == github.repository) }}
+        uses: github/codeql-action/upload-sarif@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
+        with:
+          sarif_file: trivy-frontend.sarif
+          category: trivy-frontend
+
+      - name: Trivy gate (fail on fixable CRITICAL/HIGH)
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          version: v0.76.1
+          image-ref: smiles-viz-frontend:ci
+          scanners: vuln
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          trivyignores: .trivyignore
+          format: table
+          exit-code: "1"

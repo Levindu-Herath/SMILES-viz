@@ -23,3 +23,6 @@ scikit-learn==1.9.0
 scipy>=1.13.0
 joblib==1.5.3
 numpy
+# conda-forge ships pip 26.2.2, whose vendored msgpack/urllib3 have HIGH CVEs;
+# 26.3 fixes them. Drop this once conda-lock.txt carries pip>=26.3.
+pip==26.3

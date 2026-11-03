@@ -189,3 +189,7 @@ yarl==1.25.1
     #   storage3
     #   supabase
     #   supabase-functions
+
+# The following packages are considered to be unsafe in a requirements file:
+pip==26.3
+    # via -r requirements.in
