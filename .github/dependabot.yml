@@ -1,0 +1,78 @@
+# Dependabot version updates. Minor/patch bumps are grouped into one weekly
+# PR per ecosystem; majors arrive as individual PRs. Every PR runs ci.yml, so
+# the image tests and Trivy gate vet each bump. Security updates (enabled in
+# repo settings) are separate and ignore the cooldown.
+#
+# Conda is NOT covered: Dependabot has no conda ecosystem, so python/rdkit in
+# backend/environment.yml + backend/conda-lock.txt are bumped by hand:
+#   1. check conda-forge for new rdkit/python builds (e.g. monthly, or when
+#      Trivy/an advisory flags a conda package),
+#   2. edit the versions in environment.yml,
+#   3. regenerate conda-lock.txt with the command in environment.yml's header,
+#   4. open a PR; CI rebuilds the image, runs pytest and the Trivy gate.
+version: 2
+
+updates:
+  - package-ecosystem: pip
+    directory: /backend # pip-compile: requirements.in -> requirements.txt (+ -dev)
+    schedule:
+      interval: weekly
+      day: monday
+    cooldown:
+      default-days: 7 # let brand-new releases age a week before proposing them
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: deps
+      include: scope
+    groups:
+      pip-minor-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule:
+      interval: weekly
+      day: monday
+    cooldown:
+      default-days: 7
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: deps
+      include: scope
+    groups:
+      npm-minor-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: docker
+    directories: [/backend, /frontend] # base images are tag + digest pinned
+    schedule:
+      interval: weekly
+      day: monday
+    cooldown:
+      default-days: 7
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: deps
+      include: scope
+    groups:
+      docker-minor-patch:
+        update-types: [minor, patch]
+    ignore:
+      # Stay on Node 22 LTS to match setup-node in ci.yml; move both together.
+      - dependency-name: node
+        update-types: [version-update:semver-major]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    cooldown:
+      default-days: 7
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: ci
+      include: scope
+    groups:
+      actions-minor-patch:
+        update-types: [minor, patch]
