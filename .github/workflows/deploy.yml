@@ -61,7 +61,7 @@ jobs:
             echo "found=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         if: steps.exists.outputs.found != 'true'
         with:
           submodules: ${{ matrix.submodules }}
